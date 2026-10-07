@@ -27,7 +27,36 @@ downloaded files, then streams every CSV in chunks to report shape, schema,
 missing values, documented timestamp ranges, and documented sector identifiers.
 
 Downloaded and generated artifacts under `data/`, `models/`, and `results/`
-are intentionally excluded from Git. For future modeling work, the
-author-provided tables under `02_processed_data/preprocessed/` should be the
-starting point; rebuilding the multi-million-row raw actuator exports is out of
-scope for this setup step.
+are intentionally excluded from Git.
+
+## Temporal dataset
+
+The leakage-safe temporal pipeline uses the author-provided **merged sector 4**
+table. Unlike the preprocessed tables, merged data preserves the complete
+10-minute grid; sector 4 provides the most valid 24-hour histories and future
+targets among sectors 1, 2, and 4. Sector 3 is rejected because its probe has a
+long trailing zero flatline, and sector 5 is excluded because of its documented
+water-volume inconsistency.
+
+The five input features, in fixed order, are `soil_moisture`,
+`applied_water_liters`, `weather_rain`, `weather_temp`, and
+`weather_humidity`. Applied water is lagged by one bin so it is strictly
+historical. The target is soil moisture at 1, 3, 6, 12, or 24 hours after the
+prediction origin. Each branch contains 144 consecutive 10-minute observations
+(24 hours of bins).
+
+Soil moisture is range-checked using the supplied data dictionary, clipped at
+100, checked for documented spikes and trailing flatlines, and interpolated
+only when an entire interior gap is at most 20 minutes. Longer gaps reject the
+window. Splits are contiguous 70/15/15 time ranges; histories and targets that
+cross a boundary are purged. Feature mean/std statistics use only unique rows
+referenced by training histories.
+
+```bash
+uv run python scripts/prepare_dataset.py
+uv run python scripts/inspect_samples.py
+```
+
+Compact indexed NumPy arrays and complete preprocessing provenance are written
+under `data/processed/arnesano_v2/`. The normalization statistics and exact
+split ranges are stored in `data/processed/arnesano_v2/metadata.json`.
