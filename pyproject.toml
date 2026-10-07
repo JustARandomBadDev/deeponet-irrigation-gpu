@@ -5,9 +5,11 @@ description = "Reproducible data pipeline for GPU-optimized soil-moisture predic
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "matplotlib>=3.10,<4",
     "numpy>=2,<3",
     "pandas>=2.2,<3",
     "requests>=2.32,<3",
+    "torch>=2.8,<3",
 ]
 
 [build-system]

@@ -60,3 +60,32 @@ uv run python scripts/inspect_samples.py
 Compact indexed NumPy arrays and complete preprocessing provenance are written
 under `data/processed/arnesano_v2/`. The normalization statistics and exact
 split ranges are stored in `data/processed/arnesano_v2/metadata.json`.
+
+## Baselines
+
+The persistence baseline predicts the last soil-moisture value in the
+historical window. The learned baseline is a deliberately small MLP: it
+flattens the normalized `[144, 5]` history, appends the horizon in hours divided
+by 24, and applies `Linear(721, 128) -> ReLU -> Linear(128, 64) -> ReLU ->
+Linear(64, 1)`. Its output is mapped back to physical soil-moisture units using
+the training-only soil-moisture mean and standard deviation. The dataset loader
+reconstructs windows from the prepared indices; it does not duplicate
+preprocessing or flatten model inputs.
+
+```bash
+uv run python scripts/train_mlp.py
+uv run python scripts/evaluate_baselines.py
+uv run python scripts/plot_baselines.py
+uv run python -m unittest discover -s tests
+```
+
+Training uses Adam, MSE loss, validation after each epoch, a best-validation
+checkpoint, and early stopping. CUDA is selected automatically when available.
+The evaluation reports MAE, RMSE, and R² both overall and separately for every
+forecast horizon. It also reports how often the future target equals, or is
+within 0.5 of, the current soil moisture. Per-horizon results are essential:
+long and quantized validation/test plateaus can make persistence deceptively
+strong, especially at short horizons.
+
+Generated checkpoints are stored under `models/`; metrics, prediction arrays,
+and plots are stored under `results/`. Both directories are excluded from Git.
