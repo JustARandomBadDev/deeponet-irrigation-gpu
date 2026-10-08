@@ -23,6 +23,17 @@ class TrainingConfig:
     max_epochs: int = 50
     patience: int = 8
     seed: int = 42
+    loss: str = "mse"
+    weight_decay: float = 0.0
+    change_weighting: dict[str, float] | None = None
+
+
+def make_loss(name: str, *, reduction: str = "mean") -> nn.Module:
+    if name == "mse":
+        return nn.MSELoss(reduction=reduction)
+    if name == "huber":
+        return nn.HuberLoss(delta=1.0, reduction=reduction)
+    raise ValueError(f"Unknown loss {name!r}")
 
 
 def select_device() -> torch.device:
@@ -59,6 +70,26 @@ def _mean_loss(
     return total / sample_count
 
 
+def change_weights(
+    physical_residual: torch.Tensor,
+    configuration: dict[str, float] | None,
+) -> torch.Tensor:
+    weights = torch.ones_like(physical_residual)
+    if configuration is None:
+        return weights
+    magnitude = physical_residual.abs()
+    weights = torch.where(
+        magnitude > configuration["change_threshold"],
+        torch.full_like(weights, configuration["change_weight"]),
+        weights,
+    )
+    return torch.where(
+        magnitude > configuration["large_change_threshold"],
+        torch.full_like(weights, configuration["large_change_weight"]),
+        weights,
+    )
+
+
 def _atomic_torch_save(payload: dict[str, object], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary_name = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
@@ -83,8 +114,13 @@ def train_mlp(
 ) -> dict[str, object]:
     set_deterministic_seed(config.seed)
     model.to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
-    loss_function = nn.MSELoss()
+    optimizer = torch.optim.Adam(
+        model.parameters(),
+        lr=config.learning_rate,
+        weight_decay=config.weight_decay,
+    )
+    loss_function = make_loss(config.loss)
+    elementwise_loss = make_loss(config.loss, reduction="none")
     history: list[dict[str, float | int]] = []
     best_loss = float("inf")
     best_epoch = 0
@@ -102,7 +138,12 @@ def train_mlp(
                 batch["branch_input"].to(device, non_blocking=True),
                 batch["horizon"].to(device, non_blocking=True),
             )
-            loss = loss_function(prediction, target)
+            losses = elementwise_loss(prediction, target)
+            weights = change_weights(
+                batch["residual_target"].to(device, non_blocking=True),
+                config.change_weighting,
+            )
+            loss = (losses * weights).sum() / weights.sum()
             loss.backward()
             optimizer.step()
             total += float(loss.item()) * len(target)
@@ -115,13 +156,13 @@ def train_mlp(
         history.append(
             {
                 "epoch": epoch,
-                "train_mse": train_loss,
-                "validation_mse": validation_loss,
+                "train_loss": train_loss,
+                "validation_loss": validation_loss,
             }
         )
         print(
-            f"Epoch {epoch:03d}: train MSE={train_loss:.6f}, "
-            f"validation MSE={validation_loss:.6f}"
+            f"Epoch {epoch:03d}: train {config.loss}={train_loss:.6f}, "
+            f"validation {config.loss}={validation_loss:.6f}"
         )
 
         if validation_loss < best_loss:
@@ -132,9 +173,15 @@ def train_mlp(
                 {
                     "model_state_dict": model.state_dict(),
                     "architecture": model.architecture(),
+                    "target_mode": model.target_mode,
+                    "normalization_metadata": {
+                        "output_mean": float(model.target_mean.item()),
+                        "output_std": float(model.target_std.item()),
+                        "fit_split": "train",
+                    },
                     "training_config": asdict(config),
                     "best_epoch": best_epoch,
-                    "best_validation_mse": best_loss,
+                    "best_validation_loss": best_loss,
                     "preprocessing_contract": {
                         "dataset": preprocessing_metadata["dataset"],
                         "selected_data_source": preprocessing_metadata[
@@ -165,7 +212,7 @@ def train_mlp(
         "trainable_parameters": model.trainable_parameter_count(),
         "training_config": asdict(config),
         "best_epoch": best_epoch,
-        "best_validation_mse": best_loss,
+        "best_validation_loss": best_loss,
         "epochs_completed": len(history),
         "duration_seconds": time.perf_counter() - started,
         "history": history,
@@ -176,3 +223,33 @@ def train_mlp(
 def write_json(path: Path, payload: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+
+
+def validation_selection_key(experiment: dict[str, object]) -> tuple[float, ...]:
+    """Rank an experiment without consulting any test-set information."""
+    validation = experiment["validation_metrics"]
+    assert isinstance(validation, dict)
+    overall = validation["overall"]
+    by_horizon = validation["by_horizon"]
+    assert isinstance(overall, dict) and isinstance(by_horizon, dict)
+    return (
+        float(overall["rmse"]),
+        float(by_horizon["24h"]["rmse"]),
+        float(by_horizon["12h"]["rmse"]),
+        -float(overall["r2"]),
+        float(overall["mae"]),
+    )
+
+
+def select_best_experiment(
+    experiments: list[dict[str, object]],
+) -> dict[str, object]:
+    if not experiments:
+        raise ValueError("No experiments available for selection")
+    return min(experiments, key=validation_selection_key)
+
+
+def update_checkpoint_metadata(path: Path, updates: dict[str, object]) -> None:
+    checkpoint = torch.load(path, map_location="cpu", weights_only=True)
+    checkpoint.update(updates)
+    _atomic_torch_save(checkpoint, path)

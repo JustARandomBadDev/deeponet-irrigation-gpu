@@ -64,7 +64,11 @@ split ranges are stored in `data/processed/arnesano_v2/metadata.json`.
 ## Baselines
 
 The persistence baseline predicts the last soil-moisture value in the
-historical window. The learned baseline is a deliberately small MLP: it
+historical window. It is unusually strong here because most targets are
+unchanged from the prediction origin (about 95% at 1 hour and 66% at 24 hours
+in the held-out test period).
+
+The original learned baseline is a deliberately small direct-target MLP: it
 flattens the normalized `[144, 5]` history, appends the horizon in hours divided
 by 24, and applies `Linear(721, 128) -> ReLU -> Linear(128, 64) -> ReLU ->
 Linear(64, 1)`. Its output is mapped back to physical soil-moisture units using
@@ -72,20 +76,44 @@ the training-only soil-moisture mean and standard deviation. The dataset loader
 reconstructs windows from the prepared indices; it does not duplicate
 preprocessing or flatten model inputs.
 
+The learned baseline predicts the residual `future soil moisture - current soil
+moisture`. Its selected target scaling divides by the training residual standard
+deviation without subtracting the residual mean. The final layer starts at zero,
+so an initial zero network output reconstructs exact persistence. This was more
+stable across the large chronological moisture shift than mean-centered residual
+scaling.
+
+Chronological splits remain unchanged throughout: train is fitted, validation is
+used for model selection and calibration, and test is evaluated only after the
+configuration is frozen. Experimental change weighting is applied only to train
+losses; it is never used to resample or alter validation/test, and it was rejected
+because sector-4 train already contains substantially more change than later
+periods.
+
+The now-frozen final MLP adds three train-normalized, historical-only moisture
+trends: current moisture minus moisture 1, 3, and 6 hours earlier. Its input is
+therefore `724 -> 256 -> 128 -> 64 -> 1`, with ReLU, Adam, MSE, learning rate
+`1e-3`, batch size 512, no change weighting, seed 42, and early stopping.
+Validation selected no shrinkage (`alpha=1`) and no deadband. It reaches RMSE
+`0.8975` on validation and `0.9478` on the last MLP test evaluation, compared
+with `1.2174` and `1.0489` for persistence. The prior feature-free MLP scored
+`0.9347` on validation and `0.9310` on test. The feature model was selected from
+validation only; its slightly weaker test result did not trigger post-test
+tuning. The MLP baseline is final and frozen.
+
 ```bash
 uv run python scripts/train_mlp.py
-uv run python scripts/evaluate_baselines.py
+uv run python scripts/diagnose_baselines.py
+uv run python scripts/finalize_mlp.py --summary
 uv run python scripts/plot_baselines.py
 uv run python -m unittest discover -s tests
 ```
 
-Training uses Adam, MSE loss, validation after each epoch, a best-validation
-checkpoint, and early stopping. CUDA is selected automatically when available.
-The evaluation reports MAE, RMSE, and R² both overall and separately for every
-forecast horizon. It also reports how often the future target equals, or is
-within 0.5 of, the current soil moisture. Per-horizon results are essential:
-long and quantized validation/test plateaus can make persistence deceptively
-strong, especially at short horizons.
+The final temporal-feature experiments are logged under
+`results/mlp_final_feature_experiments.json`. The final evaluator refuses to
+overwrite the last MLP test artifacts. Evaluation reports MAE, RMSE, and R²
+overall and per horizon, plus bias and errors for nearly unchanged and changing
+samples.
 
 Generated checkpoints are stored under `models/`; metrics, prediction arrays,
 and plots are stored under `results/`. Both directories are excluded from Git.

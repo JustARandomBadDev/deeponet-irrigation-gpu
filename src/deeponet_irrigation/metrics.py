@@ -77,3 +77,33 @@ def plateau_statistics(
             "persistence_mae": float(np.mean(absolute_change)),
         }
     return result
+
+
+def error_by_change_status(
+    target: np.ndarray,
+    prediction: np.ndarray,
+    current_soil_moisture: np.ndarray,
+    *,
+    tolerance: float = 0.5,
+) -> dict[str, dict[str, float | int]]:
+    target = np.asarray(target).reshape(-1)
+    prediction = np.asarray(prediction).reshape(-1)
+    current = np.asarray(current_soil_moisture).reshape(-1)
+    unchanged = np.abs(target - current) <= tolerance
+    return {
+        "nearly_unchanged": regression_metrics(target[unchanged], prediction[unchanged]),
+        "changing": regression_metrics(target[~unchanged], prediction[~unchanged]),
+    }
+
+
+def prediction_bias(
+    target: np.ndarray,
+    prediction: np.ndarray,
+) -> dict[str, float]:
+    target = np.asarray(target, dtype=np.float64).reshape(-1)
+    prediction = np.asarray(prediction, dtype=np.float64).reshape(-1)
+    return {
+        "mean_prediction": float(prediction.mean()),
+        "mean_target": float(target.mean()),
+        "mean_signed_error": float(np.mean(prediction - target)),
+    }

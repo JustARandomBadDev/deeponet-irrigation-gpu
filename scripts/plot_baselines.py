@@ -18,69 +18,124 @@ RESULTS_DIR = ROOT / "results"
 HORIZONS = (1, 3, 6, 12, 24)
 
 
-def plot_representative_interval() -> Path:
-    path = RESULTS_DIR / "test_predictions.npz"
-    if not path.exists():
-        raise FileNotFoundError(f"Missing {path}; run evaluate_baselines.py first")
-    with np.load(path) as values:
-        horizons = values["horizon_hours"].reshape(-1)
-        mask = horizons == 24
-        target_time = values["target_timestamp"][mask].astype("datetime64[m]")
-        order = np.argsort(target_time)
-        selection = order[: min(7 * 24 * 6, len(order))]
-        time = target_time[selection]
-        target = values["target"].reshape(-1)[mask][selection]
-        persistence = values["persistence"].reshape(-1)[mask][selection]
-        mlp = values["mlp"].reshape(-1)[mask][selection]
-
-    figure, axis = plt.subplots(figsize=(11, 4.5))
-    axis.plot(time, target, label="Ground truth", linewidth=2)
-    axis.plot(time, persistence, label="Persistence", alpha=0.85)
-    axis.plot(time, mlp, label="MLP", alpha=0.85)
-    axis.set(title="Representative test interval (24-hour horizon)", ylabel="Soil moisture")
-    axis.legend()
-    axis.grid(alpha=0.25)
-    figure.autofmt_xdate()
-    figure.tight_layout()
-    output = RESULTS_DIR / "test_predictions_24h.png"
-    figure.savefig(output, dpi=160)
-    plt.close(figure)
-    return output
+def load_final_log() -> dict:
+    return json.loads(
+        (RESULTS_DIR / "mlp_final_feature_experiments.json").read_text(
+            encoding="utf-8"
+        )
+    )
 
 
-def plot_mae_by_horizon() -> Path:
-    persistence = json.loads(
-        (RESULTS_DIR / "persistence_metrics.json").read_text(encoding="utf-8")
-    )["metrics"]["test"]["by_horizon"]
-    mlp = json.loads(
-        (RESULTS_DIR / "mlp_metrics.json").read_text(encoding="utf-8")
-    )["metrics"]["test"]["by_horizon"]
-    persistence_mae = [persistence[f"{horizon}h"]["mae"] for horizon in HORIZONS]
-    mlp_mae = [mlp[f"{horizon}h"]["mae"] for horizon in HORIZONS]
-
+def plot_validation_rmse() -> Path:
+    report = load_final_log()
+    series = {
+        "Persistence": json.loads(
+            (RESULTS_DIR / "mlp_improvement_experiments.json").read_text(
+                encoding="utf-8"
+            )
+        )["baselines"]["persistence"]["metrics"],
+        "Previous best MLP": report["control"]["validation_metrics"],
+        "Final trend MLP": report["selected"]["validation_metrics"],
+    }
     positions = np.arange(len(HORIZONS))
-    width = 0.38
-    figure, axis = plt.subplots(figsize=(8, 4.5))
-    axis.bar(positions - width / 2, persistence_mae, width, label="Persistence")
-    axis.bar(positions + width / 2, mlp_mae, width, label="MLP")
+    width = 0.25
+    figure, axis = plt.subplots(figsize=(9, 4.8))
+    for offset, (label, metrics) in zip((-1, 0, 1), series.items(), strict=True):
+        values = [
+            metrics["by_horizon"][f"{horizon}h"]["rmse"]
+            for horizon in HORIZONS
+        ]
+        axis.bar(positions + offset * width, values, width, label=label)
     axis.set(
-        title="Test MAE by prediction horizon",
+        title="Validation RMSE by prediction horizon",
         xlabel="Prediction horizon",
-        ylabel="MAE",
+        ylabel="RMSE (soil-moisture units)",
         xticks=positions,
         xticklabels=[f"{horizon}h" for horizon in HORIZONS],
     )
     axis.legend()
     axis.grid(axis="y", alpha=0.25)
     figure.tight_layout()
-    output = RESULTS_DIR / "mae_by_horizon.png"
+    output = RESULTS_DIR / "validation_rmse_by_horizon.png"
+    figure.savefig(output, dpi=160)
+    plt.close(figure)
+    return output
+
+
+def plot_validation_change_status() -> Path:
+    report = load_final_log()
+    persistence = json.loads(
+        (RESULTS_DIR / "mlp_improvement_experiments.json").read_text(
+            encoding="utf-8"
+        )
+    )["baselines"]["persistence"]["change_status"]
+    series = {
+        "Persistence": persistence,
+        "Previous best MLP": report["control"]["validation_change_status"],
+        "Final trend MLP": report["selected"]["validation_change_status"],
+    }
+    labels = ("Nearly unchanged", "Changing")
+    positions = np.arange(2)
+    width = 0.25
+    figure, axis = plt.subplots(figsize=(8, 4.8))
+    for offset, (label, metrics) in zip((-1, 0, 1), series.items(), strict=True):
+        values = [
+            metrics["nearly_unchanged"]["rmse"],
+            metrics["changing"]["rmse"],
+        ]
+        axis.bar(positions + offset * width, values, width, label=label)
+    axis.set(
+        title="Validation RMSE by change status",
+        ylabel="RMSE (soil-moisture units)",
+        xticks=positions,
+        xticklabels=labels,
+    )
+    axis.legend()
+    axis.grid(axis="y", alpha=0.25)
+    figure.tight_layout()
+    output = RESULTS_DIR / "validation_change_status_rmse.png"
+    figure.savefig(output, dpi=160)
+    plt.close(figure)
+    return output
+
+
+def plot_final_test_24h() -> Path:
+    with np.load(RESULTS_DIR / "final_frozen_mlp_predictions.npz") as values:
+        horizons = values["horizon_hours"].reshape(-1)
+        mask = horizons == 24
+        time = values["target_timestamp"][mask].astype("datetime64[m]")
+        order = np.argsort(time)
+        time = time[order]
+        target = values["target"].reshape(-1)[mask][order]
+        persistence = values["persistence"].reshape(-1)[mask][order]
+        original = values["previous_best_mlp"].reshape(-1)[mask][order]
+        improved = values["final_mlp"].reshape(-1)[mask][order]
+
+    figure, axis = plt.subplots(figsize=(11, 4.5))
+    axis.plot(time, target, label="Ground truth", linewidth=2)
+    axis.plot(time, persistence, label="Persistence", alpha=0.75)
+    axis.plot(time, original, label="Previous best MLP", alpha=0.75)
+    axis.plot(time, improved, label="Final trend MLP", alpha=0.9)
+    axis.set(
+        title="Final test predictions at the 24-hour horizon",
+        ylabel="Soil moisture",
+    )
+    axis.legend()
+    axis.grid(alpha=0.25)
+    figure.autofmt_xdate()
+    figure.tight_layout()
+    output = RESULTS_DIR / "final_frozen_mlp_predictions_24h.png"
     figure.savefig(output, dpi=160)
     plt.close(figure)
     return output
 
 
 def main() -> None:
-    for output in (plot_representative_interval(), plot_mae_by_horizon()):
+    for output in (
+        plot_validation_rmse(),
+        plot_validation_change_status(),
+        plot_final_test_24h(),
+    ):
         print(f"Wrote {output}")
 
 

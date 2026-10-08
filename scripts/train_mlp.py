@@ -85,7 +85,7 @@ def main() -> None:
     )
     write_json(TRAINING_RESULTS_PATH, results)
     print(f"Best epoch: {results['best_epoch']}")
-    print(f"Best validation MSE: {results['best_validation_mse']:.6f}")
+    print(f"Best validation loss: {results['best_validation_loss']:.6f}")
     print(f"Checkpoint: {CHECKPOINT_PATH}")
     print(f"Training history: {TRAINING_RESULTS_PATH}")
 
