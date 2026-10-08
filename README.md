@@ -146,5 +146,30 @@ checkpoint is `models/deeponet_reference.pt`. The final evaluator is guarded
 against repeat test inference, while `--plots-only` safely regenerates figures
 from the immutable saved predictions.
 
+## ONNX deployment
+
+Export the frozen checkpoint and run the mandatory PyTorch/ONNX Runtime
+equivalence checks with:
+
+```bash
+uv sync
+uv run python scripts/export_deeponet_onnx.py
+uv run python scripts/infer_onnx.py
+```
+
+The exporter writes `models/deeponet_reference.onnx`, deployment-focused JSON
+metadata, and a ten-sample golden NPZ fixture. The ONNX graph takes a dynamic
+batch of `branch_input [batch,723]`, normalized `horizon [batch,1]`, and
+physical `current_moisture [batch,1]`; it returns final physical soil moisture
+as `prediction [batch,1]`. Residual reconstruction is part of the graph.
+
+The three trend values at the end of `branch_input` are **normalized**, not raw:
+each trend is first calculated in physical soil-moisture units and then scaled
+with its checkpointed training mean and standard deviation. The exact feature
+layout and C++/TensorRT preprocessing contract are documented in
+[`docs/onnx_deployment.md`](docs/onnx_deployment.md). The next phase is ONNX
+import and controlled benchmarking in C++/TensorRT; this Python export phase
+does not make performance claims.
+
 Generated checkpoints are stored under `models/`; metrics, prediction arrays,
 and plots are stored under `results/`. Both directories are excluded from Git.
