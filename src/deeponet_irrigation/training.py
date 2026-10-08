@@ -102,8 +102,8 @@ def _atomic_torch_save(payload: dict[str, object], path: Path) -> None:
             os.unlink(temporary_name)
 
 
-def train_mlp(
-    model: MLPBaseline,
+def train_model(
+    model: nn.Module,
     train_loader: DataLoader[dict[str, torch.Tensor]],
     validation_loader: DataLoader[dict[str, torch.Tensor]],
     *,
@@ -220,6 +220,27 @@ def train_mlp(
     }
 
 
+def train_mlp(
+    model: MLPBaseline,
+    train_loader: DataLoader[dict[str, torch.Tensor]],
+    validation_loader: DataLoader[dict[str, torch.Tensor]],
+    *,
+    device: torch.device,
+    config: TrainingConfig,
+    checkpoint_path: Path,
+    preprocessing_metadata: dict[str, object],
+) -> dict[str, object]:
+    return train_model(
+        model,
+        train_loader,
+        validation_loader,
+        device=device,
+        config=config,
+        checkpoint_path=checkpoint_path,
+        preprocessing_metadata=preprocessing_metadata,
+    )
+
+
 def write_json(path: Path, payload: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, allow_nan=False) + "\n", encoding="utf-8")
@@ -247,6 +268,37 @@ def select_best_experiment(
     if not experiments:
         raise ValueError("No experiments available for selection")
     return min(experiments, key=validation_selection_key)
+
+
+def deeponet_validation_selection_key(
+    experiment: dict[str, object],
+) -> tuple[float, ...]:
+    """Rank DeepONets using validation metrics and complexity only."""
+    validation = experiment["validation_metrics"]
+    change_status = experiment["validation_change_status"]
+    assert isinstance(validation, dict) and isinstance(change_status, dict)
+    overall = validation["overall"]
+    by_horizon = validation["by_horizon"]
+    changing = change_status["changing"]
+    assert isinstance(overall, dict) and isinstance(by_horizon, dict)
+    assert isinstance(changing, dict)
+    return (
+        float(overall["rmse"]),
+        float(by_horizon["24h"]["rmse"]),
+        float(by_horizon["12h"]["rmse"]),
+        float(changing["rmse"]),
+        -float(overall["r2"]),
+        float(overall["mae"]),
+        float(experiment["total_parameters"]),
+    )
+
+
+def select_best_deeponet_experiment(
+    experiments: list[dict[str, object]],
+) -> dict[str, object]:
+    if not experiments:
+        raise ValueError("No DeepONet experiments available for selection")
+    return min(experiments, key=deeponet_validation_selection_key)
 
 
 def update_checkpoint_metadata(path: Path, updates: dict[str, object]) -> None:

@@ -115,5 +115,36 @@ overwrite the last MLP test artifacts. Evaluation reports MAE, RMSE, and R²
 overall and per horizon, plus bias and errors for nearly unchanged and changing
 samples.
 
+## DeepONet reference
+
+The frozen PyTorch reference is a residual Deep Operator Network. Its Branch
+network flattens the normalized 144-by-5 historical state and appends the same
+three train-normalized historical moisture trends used by the frozen MLP. Its
+Trunk network independently embeds the query coordinate `horizon_hours / 24`.
+Both produce 64-dimensional vectors, combined only through
+`sum(branch * trunk) + bias`. That normalized residual is multiplied by the
+training residual standard deviation and added to current soil moisture.
+
+The validation-selected architecture is Branch
+`723 -> 256 -> 128 -> 64`, Trunk `1 -> 64 -> 64 -> 64`, with 234,945 trainable
+parameters, MSE, Adam, learning rate `1e-3`, batch size 512, and seed 42.
+Validation RMSE is `1.0292`, compared with `1.2174` for persistence and `0.8975`
+for the frozen MLP. Its one-time final test RMSE is `1.2112`, compared with
+`1.0489` and `0.9478`, respectively. DeepONet therefore remains a useful
+operator-structured reference for later GPU work, but it is not the most
+accurate forecasting model on this chronological split. No post-test tuning was
+performed.
+
+```bash
+uv run python scripts/train_deeponet.py --run initial_s42
+uv run python scripts/train_deeponet.py --summary
+uv run python scripts/evaluate_deeponet.py --plots-only
+```
+
+The bounded experiment log is `results/deeponet_experiments.json`; the frozen
+checkpoint is `models/deeponet_reference.pt`. The final evaluator is guarded
+against repeat test inference, while `--plots-only` safely regenerates figures
+from the immutable saved predictions.
+
 Generated checkpoints are stored under `models/`; metrics, prediction arrays,
 and plots are stored under `results/`. Both directories are excluded from Git.
