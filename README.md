@@ -1,8 +1,8 @@
 # deeponet-irrigation-gpu
 
 GPU inference and optimization of a DeepONet soil-moisture predictor for the
-Arnesano precision-irrigation dataset. The repository root is reserved for the
-upcoming C++/CUDA/TensorRT runtime. The supporting data, training, evaluation,
+Arnesano precision-irrigation dataset. The repository root contains the C++
+ONNX Runtime CPU/CUDA inference path. The supporting data, training, evaluation,
 and ONNX-export toolchain is self-contained under `python/`.
 
 Shared artifacts remain at repository root: `data/`, `models/`, `results/`, and
@@ -172,10 +172,31 @@ as `prediction [batch,1]`. Residual reconstruction is part of the graph.
 The three trend values at the end of `branch_input` are **normalized**, not raw:
 each trend is first calculated in physical soil-moisture units and then scaled
 with its checkpointed training mean and standard deviation. The exact feature
-layout and C++/TensorRT preprocessing contract are documented in
-[`docs/onnx_deployment.md`](docs/onnx_deployment.md). The next phase is ONNX
-import and controlled benchmarking in C++/TensorRT; this Python export phase
-does not make performance claims.
+layout and C++ preprocessing contract are documented in
+[`docs/onnx_deployment.md`](docs/onnx_deployment.md).
+
+## C++ ONNX Runtime
+
+The root CMake project downloads a pinned official ONNX Runtime 1.30.0 CUDA 13
+binary distribution and provides a small reusable inference class. Both CPU
+and CUDA providers consume the frozen ONNX graph directly and are checked
+against the same deterministic golden vectors at batch sizes 1, 8, and 10.
+
+```bash
+uv run --project python python python/scripts/export_golden_cpp.py
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j
+./build/deeponet_golden_test --cpu
+./build/deeponet_golden_test --cuda
+./build/deeponet_golden_test --cuda-iobinding
+./build/deeponet_benchmark --provider all --warmup 100 --iterations 1000 --repetitions 3
+```
+
+See [`docs/onnx_runtime_cpp.md`](docs/onnx_runtime_cpp.md) for the dependency,
+runtime-library, tensor-contract, demo, and correctness-test details. The
+reproducible CPU, naive-CUDA, and CUDA-I/O-Binding performance experiment is
+documented in [`docs/benchmark.md`](docs/benchmark.md). Profiling-guided GPU
+optimization remains a later phase.
 
 Generated checkpoints and ONNX binaries are stored under `models/`; deployment
 metadata and compact golden fixtures may be versioned there. Metrics,
