@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
-
 import torch
 
 from deeponet_irrigation.dataset import PreparedTemporalDataset, make_data_loader
 from deeponet_irrigation.models import MLPBaseline
+from deeponet_irrigation.project_paths import REPOSITORY_ROOT
 from deeponet_irrigation.training import (
     TrainingConfig,
     select_device,
@@ -16,7 +15,7 @@ from deeponet_irrigation.training import (
 )
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = REPOSITORY_ROOT
 DATA_DIR = ROOT / "data" / "processed" / "arnesano_v2"
 CHECKPOINT_PATH = ROOT / "models" / "mlp_baseline.pt"
 TRAINING_RESULTS_PATH = ROOT / "results" / "mlp_training.json"

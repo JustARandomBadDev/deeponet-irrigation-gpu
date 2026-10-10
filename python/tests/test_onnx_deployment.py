@@ -1,8 +1,6 @@
 import importlib.util
 import json
 import unittest
-from pathlib import Path
-
 import numpy as np
 import torch
 
@@ -15,10 +13,11 @@ from deeponet_irrigation.onnx_deployment import (
     pytorch_deployment_prediction,
     sample_batch,
 )
+from deeponet_irrigation.project_paths import REPOSITORY_ROOT
 from deeponet_irrigation.temporal_features import derive_temporal_features
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = REPOSITORY_ROOT
 DATA_DIR = ROOT / "data" / "processed" / "arnesano_v2"
 CHECKPOINT = ROOT / "models" / "deeponet_reference.pt"
 ONNX_PATH = ROOT / "models" / "deeponet_reference.onnx"

@@ -1,12 +1,10 @@
-from pathlib import Path
-
 from deeponet_irrigation.data_download import DatasetError, setup_dataset
+from deeponet_irrigation.project_paths import REPOSITORY_ROOT
 
 
 def main() -> None:
-    project_root = Path(__file__).resolve().parents[1]
     try:
-        setup_dataset(project_root)
+        setup_dataset(REPOSITORY_ROOT)
     except DatasetError as exc:
         raise SystemExit(f"Data setup failed: {exc}") from exc
 

@@ -13,10 +13,11 @@ from deeponet_irrigation.dataset import (
     residual_targets,
 )
 from deeponet_irrigation.evaluation import load_mlp_checkpoint
+from deeponet_irrigation.project_paths import REPOSITORY_ROOT
 from deeponet_irrigation.training import write_json
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = REPOSITORY_ROOT
 DATA_DIR = ROOT / "data" / "processed" / "arnesano_v2"
 RESULTS_DIR = ROOT / "results"
 HORIZONS = (1, 3, 6, 12, 24)

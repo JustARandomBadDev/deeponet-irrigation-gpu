@@ -1,5 +1,6 @@
 .venv/
 /.uv-cache/
+/python/.uv-cache/
 
 __pycache__/
 *.py[cod]
@@ -10,5 +11,11 @@ __pycache__/
 
 /data/raw/
 /data/processed/
-/models/
+/models/*
+!/models/*.metadata.json
+!/models/*_golden.npz
 /results/
+
+/build/
+/cmake-build-*/
+*.plan

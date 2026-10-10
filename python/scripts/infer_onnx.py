@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import numpy as np
 import onnxruntime as ort
 import torch
@@ -13,9 +11,10 @@ from deeponet_irrigation.onnx_deployment import (
     prepare_onnx_inputs,
     sample_batch,
 )
+from deeponet_irrigation.project_paths import REPOSITORY_ROOT
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = REPOSITORY_ROOT
 DATA_DIR = ROOT / "data" / "processed" / "arnesano_v2"
 CHECKPOINT = ROOT / "models" / "deeponet_reference.pt"
 ONNX_MODEL = ROOT / "models" / "deeponet_reference.onnx"

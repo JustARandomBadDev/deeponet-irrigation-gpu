@@ -4,7 +4,6 @@ import argparse
 import json
 import shutil
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -27,6 +26,7 @@ from deeponet_irrigation.metrics import (
     prediction_bias,
 )
 from deeponet_irrigation.models import MLPBaseline
+from deeponet_irrigation.project_paths import REPOSITORY_ROOT
 from deeponet_irrigation.training import (
     TrainingConfig,
     select_device,
@@ -38,7 +38,7 @@ from deeponet_irrigation.training import (
 )
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = REPOSITORY_ROOT
 DATA_DIR = ROOT / "data" / "processed" / "arnesano_v2"
 RESULTS_DIR = ROOT / "results"
 MODELS_DIR = ROOT / "models"

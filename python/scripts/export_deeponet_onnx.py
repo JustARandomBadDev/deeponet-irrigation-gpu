@@ -19,10 +19,11 @@ from deeponet_irrigation.onnx_deployment import (
     pytorch_deployment_prediction,
     sample_batch,
 )
+from deeponet_irrigation.project_paths import REPOSITORY_ROOT
 from deeponet_irrigation.training import write_json
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = REPOSITORY_ROOT
 DATA_DIR = ROOT / "data" / "processed" / "arnesano_v2"
 DEFAULT_CHECKPOINT = ROOT / "models" / "deeponet_reference.pt"
 DEFAULT_OUTPUT = ROOT / "models" / "deeponet_reference.onnx"

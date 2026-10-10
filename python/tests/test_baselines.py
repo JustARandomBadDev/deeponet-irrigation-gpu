@@ -18,6 +18,7 @@ from deeponet_irrigation.evaluation import (
 )
 from deeponet_irrigation.metrics import metrics_by_horizon
 from deeponet_irrigation.models import MLPBaseline
+from deeponet_irrigation.project_paths import REPOSITORY_ROOT
 from deeponet_irrigation.training import change_weights, select_best_experiment
 from deeponet_irrigation.temporal_features import (
     TREND_FEATURES,
@@ -27,7 +28,7 @@ from deeponet_irrigation.temporal_features import (
 )
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = REPOSITORY_ROOT
 DATA_DIR = ROOT / "data" / "processed" / "arnesano_v2"
 
 

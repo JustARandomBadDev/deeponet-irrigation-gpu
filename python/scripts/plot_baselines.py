@@ -12,8 +12,10 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
+from deeponet_irrigation.project_paths import REPOSITORY_ROOT
 
-ROOT = Path(__file__).resolve().parents[1]
+
+ROOT = REPOSITORY_ROOT
 RESULTS_DIR = ROOT / "results"
 HORIZONS = (1, 3, 6, 12, 24)
 

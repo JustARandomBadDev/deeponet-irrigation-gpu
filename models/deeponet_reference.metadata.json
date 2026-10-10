@@ -1,0 +1,166 @@
+{
+  "model_name": "deeponet_reference",
+  "checkpoint_source": "/home/chef/Dev/deeponet-irrigation-gpu/models/deeponet_reference.pt",
+  "onnx_filename": "deeponet_reference.onnx",
+  "onnx_file_present": true,
+  "onnx_opset": 17,
+  "dtype": "float32",
+  "inputs": [
+    {
+      "name": "branch_input",
+      "shape": [
+        "batch",
+        723
+      ],
+      "semantics": "720 normalized history values followed by 3 normalized moisture trends"
+    },
+    {
+      "name": "horizon",
+      "shape": [
+        "batch",
+        1
+      ],
+      "semantics": "physical horizon_hours divided by 24 before inference"
+    },
+    {
+      "name": "current_moisture",
+      "shape": [
+        "batch",
+        1
+      ],
+      "semantics": "soil moisture at prediction origin in physical dataset units"
+    }
+  ],
+  "output": {
+    "name": "prediction",
+    "shape": [
+      "batch",
+      1
+    ],
+    "semantics": "future soil moisture in physical dataset units"
+  },
+  "branch_input_dimension": 723,
+  "history_steps": 144,
+  "sampling_interval_minutes": 10,
+  "history_flattening": "time-major [144,5], feature order varies fastest",
+  "historical_feature_order": [
+    "soil_moisture",
+    "applied_water_liters",
+    "weather_rain",
+    "weather_temp",
+    "weather_humidity"
+  ],
+  "historical_feature_normalization": {
+    "soil_moisture": {
+      "mean": 78.47251965869165,
+      "std": 5.795030184430745,
+      "formula": "(physical_value - mean) / std"
+    },
+    "applied_water_liters": {
+      "mean": 0.19360883386314218,
+      "std": 1.3290146913282408,
+      "formula": "(physical_value - mean) / std"
+    },
+    "weather_rain": {
+      "mean": 0.04416931571022251,
+      "std": 0.5737003755656218,
+      "formula": "(physical_value - mean) / std"
+    },
+    "weather_temp": {
+      "mean": 26.37911968099932,
+      "std": 4.052342702026521,
+      "formula": "(physical_value - mean) / std"
+    },
+    "weather_humidity": {
+      "mean": 61.07096369416112,
+      "std": 18.995196992123596,
+      "formula": "(physical_value - mean) / std"
+    }
+  },
+  "derived_trend_features": {
+    "input_units_before_normalization": "physical soil-moisture units",
+    "onnx_branch_values": "normalized",
+    "order": [
+      "soil_moisture_trend_1h",
+      "soil_moisture_trend_3h",
+      "soil_moisture_trend_6h"
+    ],
+    "definitions": [
+      {
+        "name": "soil_moisture_trend_1h",
+        "kind": "trend",
+        "source": "soil_moisture",
+        "steps": 6,
+        "latest_offset_steps": 0,
+        "earliest_offset_steps": -6,
+        "uses_future": false
+      },
+      {
+        "name": "soil_moisture_trend_3h",
+        "kind": "trend",
+        "source": "soil_moisture",
+        "steps": 18,
+        "latest_offset_steps": 0,
+        "earliest_offset_steps": -18,
+        "uses_future": false
+      },
+      {
+        "name": "soil_moisture_trend_6h",
+        "kind": "trend",
+        "source": "soil_moisture",
+        "steps": 36,
+        "latest_offset_steps": 0,
+        "earliest_offset_steps": -36,
+        "uses_future": false
+      }
+    ],
+    "means": [
+      -0.022085610777139664,
+      -0.03371833264827728,
+      -0.035250041633844376
+    ],
+    "stds": [
+      3.0377583503723145,
+      4.101410388946533,
+      5.027717113494873
+    ],
+    "formula": "(physical_trend - train_mean) / train_std"
+  },
+  "horizon_normalization": "horizon = horizon_hours / 24",
+  "residual_scaling": {
+    "rule": "physical_delta = normalized_delta * train_residual_std",
+    "train_residual_std": 4.4358367919921875,
+    "mean_subtraction": false
+  },
+  "current_moisture": {
+    "units": "physical soil-moisture units",
+    "normalization": "none",
+    "semantics": "last soil_moisture value at the prediction origin"
+  },
+  "supported_horizons_hours": [
+    1,
+    3,
+    6,
+    12,
+    24
+  ],
+  "dynamic_batch": true,
+  "required_runtime_validation_provider": "CPUExecutionProvider",
+  "available_onnxruntime_providers": [
+    "AzureExecutionProvider",
+    "CPUExecutionProvider"
+  ],
+  "numerical_equivalence": {
+    "status": "passed",
+    "passed": true,
+    "absolute_tolerance": 0.0001,
+    "relative_tolerance": 1e-05,
+    "overall": {
+      "max_absolute_error": 7.62939453125e-06,
+      "mean_absolute_error": 5.23674430041865e-07,
+      "max_relative_error": 1.1691790291479265e-07
+    },
+    "report": "/home/chef/Dev/deeponet-irrigation-gpu/results/deeponet_onnx_equivalence.json"
+  },
+  "golden_test_vectors": "deeponet_reference_golden.npz"
+}

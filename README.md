@@ -1,8 +1,14 @@
 # deeponet-irrigation-gpu
 
-DeepONet-based soil-moisture prediction on the Arnesano precision-irrigation
-dataset, with a reproducible Python pipeline and later GPU inference
-optimization using C++, CUDA, and TensorRT.
+GPU inference and optimization of a DeepONet soil-moisture predictor for the
+Arnesano precision-irrigation dataset. The repository root is reserved for the
+upcoming C++/CUDA/TensorRT runtime. The supporting data, training, evaluation,
+and ONNX-export toolchain is self-contained under `python/`.
+
+Shared artifacts remain at repository root: `data/`, `models/`, `results/`, and
+`docs/`. Python commands are run canonically from repository root with
+`uv run --project python`; this keeps the future C++ project and Python
+environment cleanly separated.
 
 ## Dataset setup
 
@@ -12,9 +18,9 @@ and Weather Dataset from a Multi-Sector Precision-Irrigation*:
 It never requests the unversioned latest release.
 
 ```bash
-uv sync
-uv run python scripts/setup_data.py
-uv run python scripts/inspect_dataset.py
+uv sync --project python
+uv run --project python python python/scripts/setup_data.py
+uv run --project python python python/scripts/inspect_dataset.py
 ```
 
 `setup_data.py` downloads the official version-qualified Mendeley Data ZIP,
@@ -53,8 +59,8 @@ cross a boundary are purged. Feature mean/std statistics use only unique rows
 referenced by training histories.
 
 ```bash
-uv run python scripts/prepare_dataset.py
-uv run python scripts/inspect_samples.py
+uv run --project python python python/scripts/prepare_dataset.py
+uv run --project python python python/scripts/inspect_samples.py
 ```
 
 Compact indexed NumPy arrays and complete preprocessing provenance are written
@@ -102,11 +108,11 @@ validation only; its slightly weaker test result did not trigger post-test
 tuning. The MLP baseline is final and frozen.
 
 ```bash
-uv run python scripts/train_mlp.py
-uv run python scripts/diagnose_baselines.py
-uv run python scripts/finalize_mlp.py --summary
-uv run python scripts/plot_baselines.py
-uv run python -m unittest discover -s tests
+uv run --project python python python/scripts/train_mlp.py
+uv run --project python python python/scripts/diagnose_baselines.py
+uv run --project python python python/scripts/finalize_mlp.py --summary
+uv run --project python python python/scripts/plot_baselines.py
+uv run --project python python -m unittest discover -s python/tests
 ```
 
 The final temporal-feature experiments are logged under
@@ -136,9 +142,9 @@ accurate forecasting model on this chronological split. No post-test tuning was
 performed.
 
 ```bash
-uv run python scripts/train_deeponet.py --run initial_s42
-uv run python scripts/train_deeponet.py --summary
-uv run python scripts/evaluate_deeponet.py --plots-only
+uv run --project python python python/scripts/train_deeponet.py --run initial_s42
+uv run --project python python python/scripts/train_deeponet.py --summary
+uv run --project python python python/scripts/evaluate_deeponet.py --plots-only
 ```
 
 The bounded experiment log is `results/deeponet_experiments.json`; the frozen
@@ -152,9 +158,9 @@ Export the frozen checkpoint and run the mandatory PyTorch/ONNX Runtime
 equivalence checks with:
 
 ```bash
-uv sync
-uv run python scripts/export_deeponet_onnx.py
-uv run python scripts/infer_onnx.py
+uv sync --project python
+uv run --project python python python/scripts/export_deeponet_onnx.py
+uv run --project python python python/scripts/infer_onnx.py
 ```
 
 The exporter writes `models/deeponet_reference.onnx`, deployment-focused JSON
@@ -171,5 +177,6 @@ layout and C++/TensorRT preprocessing contract are documented in
 import and controlled benchmarking in C++/TensorRT; this Python export phase
 does not make performance claims.
 
-Generated checkpoints are stored under `models/`; metrics, prediction arrays,
-and plots are stored under `results/`. Both directories are excluded from Git.
+Generated checkpoints and ONNX binaries are stored under `models/`; deployment
+metadata and compact golden fixtures may be versioned there. Metrics,
+prediction arrays, and plots are stored under the ignored `results/` tree.

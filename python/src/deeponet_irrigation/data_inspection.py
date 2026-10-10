@@ -295,7 +295,8 @@ def inspect_dataset(project_root: Path) -> None:
     metadata_path = project_root / "data" / "raw" / f"{DATASET_SLUG}.metadata.json"
     if not dataset_root.is_dir() or not metadata_path.is_file():
         raise DatasetInspectionError(
-            "Arnesano v2 is not set up. Run scripts/setup_data.py first."
+            "Arnesano v2 is not set up. Run python/scripts/setup_data.py through "
+            "the documented uv workflow first."
         )
 
     _print_documentation_check(dataset_root, metadata_path)

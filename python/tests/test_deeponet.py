@@ -7,11 +7,12 @@ import torch
 from deeponet_irrigation.dataset import PreparedTemporalDataset
 from deeponet_irrigation.evaluation import load_deeponet_checkpoint
 from deeponet_irrigation.models import ResidualDeepONet
+from deeponet_irrigation.project_paths import REPOSITORY_ROOT
 from deeponet_irrigation.temporal_features import TREND_FEATURES
 from deeponet_irrigation.training import select_best_deeponet_experiment
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = REPOSITORY_ROOT
 DATA_DIR = ROOT / "data" / "processed" / "arnesano_v2"
 
 

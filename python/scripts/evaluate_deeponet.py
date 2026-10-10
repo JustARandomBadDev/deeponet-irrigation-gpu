@@ -24,10 +24,11 @@ from deeponet_irrigation.metrics import (
     metrics_by_horizon,
     prediction_bias,
 )
+from deeponet_irrigation.project_paths import REPOSITORY_ROOT
 from deeponet_irrigation.training import select_device, write_json
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = REPOSITORY_ROOT
 DATA_DIR = ROOT / "data" / "processed" / "arnesano_v2"
 RESULTS_DIR = ROOT / "results"
 CHECKPOINT = ROOT / "models" / "deeponet_reference.pt"

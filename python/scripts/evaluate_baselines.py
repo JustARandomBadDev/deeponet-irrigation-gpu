@@ -4,7 +4,6 @@ import argparse
 import json
 import time
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -13,10 +12,11 @@ import torch
 from deeponet_irrigation.dataset import PreparedTemporalDataset, make_data_loader
 from deeponet_irrigation.evaluation import collect_predictions, load_mlp_checkpoint
 from deeponet_irrigation.metrics import error_by_change_status, metrics_by_horizon
+from deeponet_irrigation.project_paths import REPOSITORY_ROOT
 from deeponet_irrigation.training import select_device, write_json
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = REPOSITORY_ROOT
 DATA_DIR = ROOT / "data" / "processed" / "arnesano_v2"
 RESULTS_DIR = ROOT / "results"
 SELECTED_CHECKPOINT = ROOT / "models" / "mlp_baseline_best.pt"
@@ -71,7 +71,10 @@ def main() -> None:
             "Final test artifacts already exist; refusing to repeat test evaluation."
         )
     if not SELECTED_CHECKPOINT.exists() or not EXPERIMENT_LOG.exists():
-        raise SystemExit("Run scripts/tune_mlp.py and freeze validation selection first.")
+        raise SystemExit(
+            "Run `uv run --project python python python/scripts/tune_mlp.py` "
+            "from the repository root and freeze validation selection first."
+        )
     if not PRIOR_DIRECT_TEST_PREDICTIONS.exists():
         raise SystemExit("Missing the original direct-MLP test prediction artifact.")
 

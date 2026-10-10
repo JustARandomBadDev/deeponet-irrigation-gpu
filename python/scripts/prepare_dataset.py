@@ -31,6 +31,7 @@ from deeponet_irrigation.preprocessing import (
     clean_merged_sector,
     evaluate_sector,
 )
+from deeponet_irrigation.project_paths import REPOSITORY_ROOT
 from deeponet_irrigation.splits import make_chronological_splits
 from deeponet_irrigation.temporal_windows import (
     fit_feature_normalization,
@@ -101,7 +102,7 @@ def _sample_summary(samples: object, timestamps: pd.DatetimeIndex) -> dict[str, 
 
 
 def main() -> None:
-    project_root = Path(__file__).resolve().parents[1]
+    project_root = REPOSITORY_ROOT
     try:
         provenance_path = project_root / "data/raw/arnesano-v2.metadata.json"
         provenance = json.loads(provenance_path.read_text(encoding="utf-8"))

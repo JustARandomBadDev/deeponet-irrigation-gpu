@@ -7,14 +7,14 @@ import numpy as np
 import pandas as pd
 
 from deeponet_irrigation.data_loading import DataValidationError
+from deeponet_irrigation.project_paths import REPOSITORY_ROOT
 from deeponet_irrigation.temporal_windows import load_sample_arrays
 
 OUTPUT_DIRECTORY = Path("data/processed/arnesano_v2")
 
 
 def main() -> None:
-    project_root = Path(__file__).resolve().parents[1]
-    output_dir = project_root / OUTPUT_DIRECTORY
+    output_dir = REPOSITORY_ROOT / OUTPUT_DIRECTORY
     metadata_path = output_dir / "metadata.json"
     try:
         metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
@@ -24,7 +24,8 @@ def main() -> None:
         )
     except (OSError, ValueError) as exc:
         raise SystemExit(
-            "Prepared data is unavailable or invalid. Run scripts/prepare_dataset.py "
+            "Prepared data is unavailable or invalid. Run python/scripts/"
+            "prepare_dataset.py through the documented uv workflow "
             f"first: {exc}"
         ) from exc
 
