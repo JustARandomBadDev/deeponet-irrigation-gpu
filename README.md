@@ -10,11 +10,11 @@ training, evaluation, and ONNX-export toolchain lives under `python/`.
 
 ## Main results
 
-| Predictor | Test RMSE |
-|---|---:|
-| Persistence | 1.0489 |
+| Predictor                        |  Test RMSE |
+| -------------------------------- | ---------: |
+| Persistence                      |     1.0489 |
 | Validation-selected residual MLP | **0.9478** |
-| Frozen residual DeepONet | 1.2112 |
+| Frozen residual DeepONet         |     1.2112 |
 
 - Normal CUDA is **2.561×** faster than CPU at batch 4096, but CPU remains
   faster at batches 1, 8, and 32.
@@ -76,7 +76,8 @@ the dataset.
 
 - [Carnet d'expérimentation — Français](docs/experiment_fr.md)
 - [Experiment notebook — English](docs/experiment_en.md)
-- [Implementation and reproducibility](docs/implementation.md)
+- [Reproducibility](docs/reproducibility.md)
+- [Implementation](docs/implementation.md)
 
 ## Repository structure
 

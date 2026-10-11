@@ -81,14 +81,14 @@ training. If those JSON summaries are absent in a research checkout,
 
 ## Frozen deployment artifacts
 
-| Path | Bytes | SHA-256 |
-| --- | ---: | --- |
-| `models/deeponet_reference.pt` | 950,092 | `10ab845e136d9011f9322848fe43ee1d6ae76b0cb655cd9440d1fd04c09c6fc1` |
-| `models/deeponet_reference.onnx` | 942,832 | `6eef7579599dff7fe038cc7580bd8772116ec8f52cbecbb84044ec88c4695964` |
-| `models/deeponet_reference.metadata.json` | 4,397 | `65f6e248fa27c453ef3b7ce3bde46e00bacbd3344d9b72fba247cf03eb8fc06a` |
-| `models/deeponet_reference_golden.npz` | 5,154 | `42d928db3e81c9c79c7104090b1b2296a23fb0e42a749e941b1f08f1d7c2f648` |
-| `models/deeponet_reference_golden.bin` | 29,056 | `7829c3a6678008759c7b6b781b78d7f920e6f7705f03b6eae961759dfe7c188b` |
-| `models/deeponet_reference_golden.json` | 744 | `8b2a8456426cc4cee6e8821c3b3255762974790c4525c30c7f3ba83d9e7b8003` |
+| Path                                      |   Bytes | SHA-256                                                            |
+| ----------------------------------------- | ------: | ------------------------------------------------------------------ |
+| `models/deeponet_reference.pt`            | 950,092 | `10ab845e136d9011f9322848fe43ee1d6ae76b0cb655cd9440d1fd04c09c6fc1` |
+| `models/deeponet_reference.onnx`          | 942,832 | `6eef7579599dff7fe038cc7580bd8772116ec8f52cbecbb84044ec88c4695964` |
+| `models/deeponet_reference.metadata.json` |   4,397 | `65f6e248fa27c453ef3b7ce3bde46e00bacbd3344d9b72fba247cf03eb8fc06a` |
+| `models/deeponet_reference_golden.npz`    |   5,154 | `42d928db3e81c9c79c7104090b1b2296a23fb0e42a749e941b1f08f1d7c2f648` |
+| `models/deeponet_reference_golden.bin`    |  29,056 | `7829c3a6678008759c7b6b781b78d7f920e6f7705f03b6eae961759dfe7c188b` |
+| `models/deeponet_reference_golden.json`   |     744 | `8b2a8456426cc4cee6e8821c3b3255762974790c4525c30c7f3ba83d9e7b8003` |
 
 These files total less than 2 MB. Git LFS is not required.
 

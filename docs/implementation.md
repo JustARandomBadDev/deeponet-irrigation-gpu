@@ -55,7 +55,7 @@ download the dataset, train a model, or change the frozen checkpoint.
 The optional FP16 conversion is separate:
 
 ```bash
-uv run --project python python python/scripts/convert_onnx_fp16.py
+uv run --project python python/scripts/convert_onnx_fp16.py
 ```
 
 It creates `models/deeponet_reference_fp16.onnx`; it does not replace the

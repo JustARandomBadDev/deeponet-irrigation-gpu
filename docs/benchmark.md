@@ -127,4 +127,3 @@ isolate kernel time from copies or launch overhead. A later profiling phase
 should determine operator placement and duration, transfer behavior, stream
 synchronization costs, and whether CUDA Graphs or a different transfer strategy
 is justified.
-

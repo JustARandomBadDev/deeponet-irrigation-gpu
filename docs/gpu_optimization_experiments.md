@@ -87,7 +87,7 @@ path.
 FP16 conversion is deterministic and requires no retraining:
 
 ```bash
-uv run --project python python python/scripts/convert_onnx_fp16.py
+uv run --project python python/scripts/convert_onnx_fp16.py
 ```
 
 The generated `models/deeponet_reference_fp16.onnx` retains FP32 inputs and
