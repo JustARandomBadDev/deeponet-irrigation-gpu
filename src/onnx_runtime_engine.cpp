@@ -174,7 +174,8 @@ const char* provider_name(ExecutionProvider p_provider) {
 OnnxRuntimeEngine::OnnxRuntimeEngine(
     const std::filesystem::path& p_model_path,
     ExecutionProvider p_provider,
-    int p_intra_op_threads
+    int p_intra_op_threads,
+    bool p_enable_cuda_graph
 )
     : provider_(p_provider),
       environment_(ORT_LOGGING_LEVEL_WARNING, "deeponet_ort") {
@@ -201,7 +202,14 @@ OnnxRuntimeEngine::OnnxRuntimeEngine(
         }
 
         Ort::CUDAProviderOptions cuda_options;
-        cuda_options.Update({{"device_id", "0"}});
+        if (p_enable_cuda_graph) {
+            cuda_options.Update({
+                {"device_id", "0"},
+                {"enable_cuda_graph", "1"},
+            });
+        } else {
+            cuda_options.Update({{"device_id", "0"}});
+        }
         session_options_.AppendExecutionProvider_CUDA_V2(*cuda_options);
         session_options_.AddConfigEntry(kOrtSessionOptionsDisableCPUEPFallback, "1");
     }
@@ -297,6 +305,26 @@ void OnnxRuntimeEngine::infer_iobinding(
     std::span<float> p_predictions,
     std::size_t p_batch_size
 ) {
+    upload_iobinding_inputs(
+        p_branch_input,
+        p_horizon,
+        p_current_moisture,
+        p_batch_size
+    );
+    if (p_predictions.size() != p_batch_size) {
+        throw std::invalid_argument("prediction span must contain batch_size floats");
+    }
+
+    infer_iobinding_device();
+    download_iobinding_output(p_predictions);
+}
+
+void OnnxRuntimeEngine::upload_iobinding_inputs(
+    const std::vector<float>& p_branch_input,
+    const std::vector<float>& p_horizon,
+    const std::vector<float>& p_current_moisture,
+    std::size_t p_batch_size
+) {
     if (provider_ != ExecutionProvider::Cuda) {
         throw std::logic_error("I/O Binding requires CUDAExecutionProvider");
     }
@@ -306,9 +334,6 @@ void OnnxRuntimeEngine::infer_iobinding(
         p_current_moisture,
         p_batch_size
     );
-    if (p_predictions.size() != p_batch_size) {
-        throw std::invalid_argument("prediction span must contain batch_size floats");
-    }
 
     prepare_iobinding(p_batch_size);
     const std::size_t branch_bytes = p_branch_input.size() * sizeof(float);
@@ -340,9 +365,26 @@ void OnnxRuntimeEngine::infer_iobinding(
         ),
         "cudaMemcpy current_moisture host-to-device"
     );
+}
 
+void OnnxRuntimeEngine::infer_iobinding_device() {
+    if (!cuda_io_ || !cuda_io_->binding) {
+        throw std::logic_error("I/O Binding inputs have not been uploaded");
+    }
     session_.Run(Ort::RunOptions{nullptr}, *cuda_io_->binding);
     cuda_io_->binding->SynchronizeOutputs();
+}
+
+void OnnxRuntimeEngine::download_iobinding_output(
+    std::span<float> p_predictions
+) {
+    if (!cuda_io_ || !cuda_io_->binding) {
+        throw std::logic_error("I/O Binding inference has not been prepared");
+    }
+    if (p_predictions.size() != cuda_io_->bound_batch) {
+        throw std::invalid_argument("prediction span must contain batch_size floats");
+    }
+    const std::size_t scalar_bytes = p_predictions.size() * sizeof(float);
     check_cuda(
         cudaMemcpy(
             p_predictions.data(),

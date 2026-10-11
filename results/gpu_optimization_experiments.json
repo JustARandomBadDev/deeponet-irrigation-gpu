@@ -1,0 +1,116 @@
+{
+  "methodology": {
+    "build_type": "Release",
+    "warmup_iterations_per_repetition": 100,
+    "measured_iterations_per_repetition": 1000,
+    "repetitions": 3,
+    "batch_sizes": [1, 8, 32, 128, 256, 512, 1024, 2048, 4096],
+    "input_source": "deterministic repetition of the existing golden vectors"
+  },
+  "artifacts": {
+    "fp32_raw_csv": "results/gpu_optimization_benchmark.csv",
+    "fp16_raw_csv": "results/gpu_optimization_fp16_benchmark.csv",
+    "fp16_model": "models/deeponet_reference_fp16.onnx"
+  },
+  "correctness": {
+    "fp32_max_absolute_error": 3.814697265625e-06,
+    "fp16_max_absolute_error": 0.0137291,
+    "fp16_mean_absolute_error_batch_4096": 0.00731959,
+    "fp32_tolerance": 0.0001,
+    "fp16_experiment_tolerance": 0.05
+  },
+  "speedup_vs_cuda_fp32": {
+    "cuda_graph": {
+      "1": 2.244498,
+      "8": 1.920503,
+      "32": 1.483172,
+      "128": 1.055656,
+      "256": 0.983417,
+      "512": 1.001994,
+      "1024": 1.012186,
+      "2048": 1.006928,
+      "4096": 1.011658
+    },
+    "cuda_iobinding_device": {
+      "1": 1.193104,
+      "8": 1.188884,
+      "32": 1.234480,
+      "128": 1.310712,
+      "256": 1.484247,
+      "512": 1.948582,
+      "1024": 2.328983,
+      "2048": 2.639427,
+      "4096": 2.811948
+    },
+    "cuda_fp16": {
+      "1": 0.946679,
+      "8": 0.872463,
+      "32": 0.905249,
+      "128": 0.964963,
+      "256": 1.146830,
+      "512": 1.090254,
+      "1024": 1.108953,
+      "2048": 1.101930,
+      "4096": 1.119770
+    }
+  },
+  "speedup_vs_cpu_fp32": {
+    "cuda": {
+      "1": 0.151,
+      "8": 0.222,
+      "32": 0.459,
+      "128": 1.071,
+      "256": 1.313,
+      "512": 1.613,
+      "1024": 1.936,
+      "2048": 2.258,
+      "4096": 2.561
+    },
+    "cuda_graph": {
+      "1": 0.339,
+      "8": 0.426,
+      "32": 0.680,
+      "128": 1.130,
+      "256": 1.291,
+      "512": 1.617,
+      "1024": 1.960,
+      "2048": 2.274,
+      "4096": 2.591
+    },
+    "cuda_iobinding_device": {
+      "1": 0.180,
+      "8": 0.264,
+      "32": 0.566,
+      "128": 1.404,
+      "256": 1.948,
+      "512": 3.144,
+      "1024": 4.510,
+      "2048": 5.960,
+      "4096": 7.202
+    }
+  },
+  "representative_results": [
+    {"mode": "cuda", "batch": 1, "mean_latency_ms": 0.1200985073, "throughput_samples_per_second": 8326.498157},
+    {"mode": "cuda_graph", "batch": 1, "mean_latency_ms": 0.05350795567, "throughput_samples_per_second": 18688.80968},
+    {"mode": "cuda_iobinding_device", "batch": 1, "mean_latency_ms": 0.1006605553, "throughput_samples_per_second": 9934.377937},
+    {"mode": "cuda_fp16", "batch": 1, "mean_latency_ms": 0.1268629133, "throughput_samples_per_second": 7882.524323},
+    {"mode": "cuda", "batch": 4096, "mean_latency_ms": 1.612491491, "throughput_samples_per_second": 2540168.443},
+    {"mode": "cuda_graph", "batch": 4096, "mean_latency_ms": 1.593909605, "throughput_samples_per_second": 2569781.866},
+    {"mode": "cuda_iobinding_device", "batch": 4096, "mean_latency_ms": 0.5734427713, "throughput_samples_per_second": 7142822.623},
+    {"mode": "cuda_fp16", "batch": 4096, "mean_latency_ms": 1.44001977, "throughput_samples_per_second": 2844405.392}
+  ],
+  "ranking": {
+    "useful": [
+      "cuda_graph for batches 1 through 128",
+      "cuda_iobinding_device when the surrounding pipeline keeps tensors on the GPU",
+      "cuda_fp16 for batches 256 and larger when its measured accuracy loss is acceptable"
+    ],
+    "neutral": [
+      "cuda_graph for batches 256 and larger"
+    ],
+    "harmful": [
+      "host-to-host cuda_iobinding at every tested batch",
+      "cuda_fp16 for batches 1 through 128"
+    ]
+  }
+}

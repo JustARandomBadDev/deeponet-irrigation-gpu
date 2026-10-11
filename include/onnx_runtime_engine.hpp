@@ -23,7 +23,8 @@ public:
     OnnxRuntimeEngine(
         const std::filesystem::path& p_model_path,
         ExecutionProvider p_provider,
-        int p_intra_op_threads = 0
+        int p_intra_op_threads = 0,
+        bool p_enable_cuda_graph = false
     );
     ~OnnxRuntimeEngine();
 
@@ -44,6 +45,17 @@ public:
         std::span<float> p_predictions,
         std::size_t p_batch_size
     );
+
+    void upload_iobinding_inputs(
+        const std::vector<float>& p_branch_input,
+        const std::vector<float>& p_horizon,
+        const std::vector<float>& p_current_moisture,
+        std::size_t p_batch_size
+    );
+
+    void infer_iobinding_device();
+
+    void download_iobinding_output(std::span<float> p_predictions);
 
     [[nodiscard]] static std::vector<std::string> available_providers();
 

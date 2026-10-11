@@ -14,6 +14,7 @@
 #include <iomanip>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <numeric>
 #include <optional>
 #include <sstream>
@@ -32,12 +33,16 @@
 namespace {
 
 constexpr float kCorrectnessTolerance = 1.0e-4F;
+constexpr float kFp16CorrectnessTolerance = 5.0e-2F;
 constexpr std::array<std::size_t, 9> kBatchSizes = {1, 8, 32, 128, 256, 512, 1024, 2048, 4096};
 
 enum class BenchmarkMode {
     Cpu,
     Cuda,
     CudaIoBinding,
+    CudaGraph,
+    CudaIoBindingDevice,
+    CudaFp16,
 };
 
 struct Options {
@@ -75,6 +80,11 @@ struct BenchmarkResult {
     Statistics statistics;
 };
 
+struct PredictionError {
+    float maximum;
+    double mean;
+};
+
 const char* mode_identifier(BenchmarkMode p_mode) {
     switch (p_mode) {
         case BenchmarkMode::Cpu:
@@ -83,6 +93,12 @@ const char* mode_identifier(BenchmarkMode p_mode) {
             return "cuda";
         case BenchmarkMode::CudaIoBinding:
             return "cuda_iobinding";
+        case BenchmarkMode::CudaGraph:
+            return "cuda_graph";
+        case BenchmarkMode::CudaIoBindingDevice:
+            return "cuda_iobinding_device";
+        case BenchmarkMode::CudaFp16:
+            return "cuda_fp16";
     }
     throw std::logic_error("Unknown benchmark mode");
 }
@@ -95,6 +111,12 @@ const char* mode_label(BenchmarkMode p_mode) {
             return "ORT CUDA naive";
         case BenchmarkMode::CudaIoBinding:
             return "ORT CUDA I/O Binding";
+        case BenchmarkMode::CudaGraph:
+            return "ORT CUDA Graph";
+        case BenchmarkMode::CudaIoBindingDevice:
+            return "ORT CUDA GPU-resident";
+        case BenchmarkMode::CudaFp16:
+            return "ORT CUDA FP16";
     }
     throw std::logic_error("Unknown benchmark mode");
 }
@@ -103,6 +125,12 @@ deeponet::ExecutionProvider execution_provider(BenchmarkMode p_mode) {
     return p_mode == BenchmarkMode::Cpu
                ? deeponet::ExecutionProvider::Cpu
                : deeponet::ExecutionProvider::Cuda;
+}
+
+const char* model_path(BenchmarkMode p_mode) {
+    return p_mode == BenchmarkMode::CudaFp16
+               ? "models/deeponet_reference_fp16.onnx"
+               : "models/deeponet_reference.onnx";
 }
 
 std::size_t parse_count(const char* p_text, const char* p_option) {
@@ -143,16 +171,20 @@ Options parse_options(int p_argc, char** p_argv) {
         } else {
             throw std::invalid_argument(
                 "Usage: ./build/deeponet_benchmark --provider "
-                "cpu|cuda|cuda-iobinding|all "
+                "cpu|cuda|cuda-iobinding|cuda-graph|"
+                "cuda-iobinding-device|cuda-fp16|all "
                 "[--batch N] [--warmup N] [--iterations N] [--repetitions N]"
             );
         }
     }
 
-    const std::array<std::string_view, 4> valid = {
+    const std::array<std::string_view, 7> valid = {
         "cpu",
         "cuda",
         "cuda-iobinding",
+        "cuda-graph",
+        "cuda-iobinding-device",
+        "cuda-fp16",
         "all",
     };
     if (std::find(valid.begin(), valid.end(), options.provider) == valid.end()) {
@@ -171,10 +203,21 @@ std::vector<BenchmarkMode> selected_modes(const Options& p_options) {
     if (p_options.provider == "cuda-iobinding") {
         return {BenchmarkMode::CudaIoBinding};
     }
+    if (p_options.provider == "cuda-graph") {
+        return {BenchmarkMode::CudaGraph};
+    }
+    if (p_options.provider == "cuda-iobinding-device") {
+        return {BenchmarkMode::CudaIoBindingDevice};
+    }
+    if (p_options.provider == "cuda-fp16") {
+        return {BenchmarkMode::CudaFp16};
+    }
     return {
         BenchmarkMode::Cpu,
         BenchmarkMode::Cuda,
         BenchmarkMode::CudaIoBinding,
+        BenchmarkMode::CudaGraph,
+        BenchmarkMode::CudaIoBindingDevice,
     };
 }
 
@@ -215,7 +258,10 @@ void run_inference(
     std::vector<float>& p_predictions,
     std::size_t p_batch_size
 ) {
-    if (p_mode == BenchmarkMode::CudaIoBinding) {
+    if (p_mode == BenchmarkMode::CudaIoBindingDevice) {
+        p_engine.infer_iobinding_device();
+    } else if (p_mode == BenchmarkMode::CudaIoBinding ||
+               p_mode == BenchmarkMode::CudaGraph) {
         p_engine.infer_iobinding(
             p_input.branch,
             p_input.horizon,
@@ -233,7 +279,27 @@ void run_inference(
     }
 }
 
-void verify_predictions(
+void prepare_device_resident_inference(
+    deeponet::OnnxRuntimeEngine& p_engine,
+    const BenchmarkInput& p_input,
+    std::size_t p_batch_size
+) {
+    p_engine.upload_iobinding_inputs(
+        p_input.branch,
+        p_input.horizon,
+        p_input.current_moisture,
+        p_batch_size
+    );
+}
+
+void read_device_resident_output(
+    deeponet::OnnxRuntimeEngine& p_engine,
+    std::vector<float>& p_predictions
+) {
+    p_engine.download_iobinding_output(p_predictions);
+}
+
+PredictionError verify_predictions(
     const std::vector<float>& p_predictions,
     const std::vector<float>& p_expected,
     BenchmarkMode p_mode,
@@ -243,13 +309,19 @@ void verify_predictions(
         throw std::runtime_error("Benchmark correctness output size mismatch");
     }
     float maximum_error = 0.0F;
+    double total_error = 0.0;
     for (std::size_t i = 0; i < p_predictions.size(); i++) {
+        const float error = std::abs(p_predictions[i] - p_expected[i]);
         maximum_error = std::max(
             maximum_error,
-            std::abs(p_predictions[i] - p_expected[i])
+            error
         );
+        total_error += error;
     }
-    if (maximum_error > kCorrectnessTolerance) {
+    const float tolerance = p_mode == BenchmarkMode::CudaFp16
+                                ? kFp16CorrectnessTolerance
+                                : kCorrectnessTolerance;
+    if (maximum_error > tolerance) {
         throw std::runtime_error(
             std::string(mode_identifier(p_mode)) + " batch " +
             std::to_string(p_batch_size) +
@@ -257,6 +329,10 @@ void verify_predictions(
             std::to_string(maximum_error)
         );
     }
+    return {
+        .maximum = maximum_error,
+        .mean = total_error / static_cast<double>(p_predictions.size()),
+    };
 }
 
 double percentile(const std::vector<double>& p_sorted, double p_fraction) {
@@ -308,18 +384,39 @@ std::vector<BenchmarkResult> run_mode(
     int p_cpu_threads
 ) {
     const int intra_op_threads = p_mode == BenchmarkMode::Cpu ? p_cpu_threads : 0;
-    deeponet::OnnxRuntimeEngine engine(
-        "models/deeponet_reference.onnx",
-        execution_provider(p_mode),
-        intra_op_threads
-    );
+    const bool cuda_graph = p_mode == BenchmarkMode::CudaGraph;
+    auto make_engine = [&]() {
+        return std::make_unique<deeponet::OnnxRuntimeEngine>(
+            model_path(p_mode),
+            execution_provider(p_mode),
+            intra_op_threads,
+            cuda_graph
+        );
+    };
+    auto shared_engine = cuda_graph ? nullptr : make_engine();
     std::vector<BenchmarkResult> results;
 
     for (const std::size_t batch_size : selected_batch_sizes(p_options)) {
+        auto graph_engine = cuda_graph ? make_engine() : nullptr;
+        auto& engine = cuda_graph ? *graph_engine : *shared_engine;
         const auto input = prepare_input(p_fixture, batch_size);
         std::vector<float> predictions(batch_size);
+        if (p_mode == BenchmarkMode::CudaIoBindingDevice) {
+            prepare_device_resident_inference(engine, input, batch_size);
+        }
         run_inference(engine, p_mode, input, predictions, batch_size);
-        verify_predictions(predictions, input.expected, p_mode, batch_size);
+        if (p_mode == BenchmarkMode::CudaIoBindingDevice) {
+            read_device_resident_output(engine, predictions);
+        }
+        const auto correctness = verify_predictions(
+            predictions,
+            input.expected,
+            p_mode,
+            batch_size
+        );
+        std::cout << "  correctness batch=" << batch_size
+                  << " max_abs=" << correctness.maximum
+                  << " mean_abs=" << correctness.mean << '\n';
 
         std::vector<double> aggregate_latencies;
         aggregate_latencies.reserve(
@@ -342,7 +439,15 @@ std::vector<BenchmarkResult> run_mode(
                     std::chrono::duration<double, std::milli>(stop - start).count();
                 latencies.push_back(latency_ms);
             }
-            verify_predictions(predictions, input.expected, p_mode, batch_size);
+            if (p_mode == BenchmarkMode::CudaIoBindingDevice) {
+                read_device_resident_output(engine, predictions);
+            }
+            static_cast<void>(verify_predictions(
+                predictions,
+                input.expected,
+                p_mode,
+                batch_size
+            ));
             aggregate_latencies.insert(
                 aggregate_latencies.end(),
                 latencies.begin(),
@@ -475,6 +580,55 @@ void print_speedups(
     }
 }
 
+void print_cuda_optimization_speedups(
+    const std::vector<BenchmarkResult>& p_results,
+    const Options& p_options
+) {
+    const auto batch_sizes = selected_batch_sizes(p_options);
+    const std::array<BenchmarkMode, 3> optimized_modes = {
+        BenchmarkMode::CudaGraph,
+        BenchmarkMode::CudaIoBindingDevice,
+        BenchmarkMode::CudaFp16,
+    };
+    const bool has_cuda = std::any_of(
+        p_results.begin(),
+        p_results.end(),
+        [](const BenchmarkResult& p_item) {
+            return p_item.aggregate && p_item.mode == BenchmarkMode::Cuda;
+        }
+    );
+    if (!has_cuda) {
+        return;
+    }
+
+    std::cout << "\nMode                       Batch  Speedup vs CUDA\n"
+              << "------------------------------------------------\n";
+    for (const std::size_t batch_size : batch_sizes) {
+        const double cuda = aggregate_result(
+            p_results,
+            BenchmarkMode::Cuda,
+            batch_size
+        ).statistics.mean_ms;
+        for (const BenchmarkMode mode : optimized_modes) {
+            const auto item = std::find_if(
+                p_results.begin(),
+                p_results.end(),
+                [mode, batch_size](const BenchmarkResult& p_result) {
+                    return p_result.aggregate && p_result.mode == mode &&
+                           p_result.batch_size == batch_size;
+                }
+            );
+            if (item == p_results.end()) {
+                continue;
+            }
+            std::cout << std::left << std::setw(27) << mode_label(mode)
+                      << std::right << std::setw(6) << batch_size
+                      << std::setw(18) << std::fixed << std::setprecision(3)
+                      << cuda / item->statistics.mean_ms << "x\n";
+        }
+    }
+}
+
 std::string json_escape(std::string_view p_value) {
     std::string escaped;
     for (const char character : p_value) {
@@ -561,8 +715,15 @@ void write_environment(
            << "  \"measured_iterations_per_repetition\": "
            << p_options.measured_iterations << ",\n"
            << "  \"repetitions\": " << p_options.repetitions << ",\n"
-           << "  \"benchmark_modes\": [\"cpu\", \"cuda\", "
-              "\"cuda_iobinding\"],\n"
+           << "  \"benchmark_modes\": [";
+    const auto modes = selected_modes(p_options);
+    for (std::size_t i = 0; i < modes.size(); i++) {
+        if (i != 0) {
+            output << ", ";
+        }
+        output << '"' << mode_identifier(modes[i]) << '"';
+    }
+    output << "],\n"
            << "  \"batch_sizes\": [";
     const auto batch_sizes = selected_batch_sizes(p_options);
     for (std::size_t i = 0; i < batch_sizes.size(); i++) {
@@ -664,6 +825,7 @@ int main(int argc, char** argv) {
 
         print_results(results);
         print_speedups(results, options);
+        print_cuda_optimization_speedups(results, options);
         const std::filesystem::path output_directory = "results/benchmark";
         std::filesystem::create_directories(output_directory);
         write_csv(output_directory / "onnx_runtime_benchmark.csv", results);

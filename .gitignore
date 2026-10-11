@@ -14,6 +14,7 @@ __pycache__/
 /models/*
 !/models/deeponet_reference.pt
 !/models/deeponet_reference.onnx
+!/models/deeponet_reference_fp16.onnx
 !/models/deeponet_reference.metadata.json
 !/models/deeponet_reference_golden.npz
 !/models/deeponet_reference_golden.bin
@@ -25,6 +26,7 @@ __pycache__/
 !/results/final_frozen_mlp_metrics.json
 !/results/deeponet_final_test_metrics.json
 !/results/deeponet_onnx_equivalence.json
+!/results/gpu_optimization_experiments.json
 
 /build/
 /cmake-build-*/
