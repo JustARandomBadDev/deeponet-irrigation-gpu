@@ -12,9 +12,19 @@ __pycache__/
 /data/raw/
 /data/processed/
 /models/*
-!/models/*.metadata.json
-!/models/*_golden.npz
-/results/
+!/models/deeponet_reference.pt
+!/models/deeponet_reference.onnx
+!/models/deeponet_reference.metadata.json
+!/models/deeponet_reference_golden.npz
+!/models/deeponet_reference_golden.bin
+!/models/deeponet_reference_golden.json
+/results/*
+!/results/mlp_improvement_experiments.json
+!/results/mlp_final_feature_experiments.json
+!/results/deeponet_experiments.json
+!/results/final_frozen_mlp_metrics.json
+!/results/deeponet_final_test_metrics.json
+!/results/deeponet_onnx_equivalence.json
 
 /build/
 /cmake-build-*/

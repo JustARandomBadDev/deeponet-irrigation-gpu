@@ -122,15 +122,24 @@ def parse_args() -> argparse.Namespace:
 
 
 def load_validation_baselines() -> dict[str, Any]:
-    improvement = json.loads(
-        (RESULTS_DIR / "mlp_improvement_experiments.json").read_text(
-            encoding="utf-8"
+    improvement_path = RESULTS_DIR / "mlp_improvement_experiments.json"
+    frozen_mlp_path = RESULTS_DIR / "mlp_final_feature_experiments.json"
+    missing = [
+        str(path)
+        for path in (improvement_path, frozen_mlp_path)
+        if not path.exists()
+    ]
+    if missing:
+        print(
+            "Validation baseline summaries are unavailable; continuing without "
+            "comparison metadata: " + ", ".join(missing)
         )
+        return {}
+    improvement = json.loads(
+        improvement_path.read_text(encoding="utf-8")
     )
     frozen_mlp = json.loads(
-        (RESULTS_DIR / "mlp_final_feature_experiments.json").read_text(
-            encoding="utf-8"
-        )
+        frozen_mlp_path.read_text(encoding="utf-8")
     )["selected"]
     return {
         "persistence": improvement["baselines"]["persistence"],

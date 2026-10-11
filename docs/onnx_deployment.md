@@ -37,4 +37,46 @@ TensorRT caller must not apply residual reconstruction a second time.
 The machine-readable metadata contains the exact normalization values and
 feature definitions. The small golden NPZ fixture contains the three input
 arrays and expected physical predictions for ten deterministic validation
-samples; it is intended for later TensorRT integration tests.
+samples. The corresponding binary fixture is consumed by the C++ tests.
+
+## One-command deployment setup
+
+From repository root:
+
+```bash
+uv sync --project python
+uv run --project python setup-onnx
+```
+
+This command does not download or prepare Arnesano data and does not invoke any
+training function. It uses the frozen checkpoint as the source model, the
+tracked metadata for the preprocessing/model contract, and the tracked golden
+NPZ for deterministic deployment inputs. It then:
+
+1. validates the checkpoint flags, architecture, and preprocessing contract;
+2. exports `deeponet_reference.onnx` with dynamic batching and opset 17;
+3. runs `onnx.checker` and verifies all float32 input/output names and shapes;
+4. compares PyTorch and ONNX Runtime predictions with the established
+   `atol=1e-4`, `rtol=1e-5` tolerances;
+5. refreshes expected predictions in the ten-case golden NPZ;
+6. regenerates the C++ golden BIN and JSON files;
+7. prints checkpoint, pre/post ONNX, and golden NPZ SHA-256 hashes.
+
+The comprehensive historical exporter
+`python/scripts/export_deeponet_onnx.py` remains available when the prepared
+dataset is present. It checks additional train/validation/test samples; it is
+not needed for deployment setup.
+
+## Frozen artifact integrity
+
+The canonical deployment sources are versioned with the repository:
+
+- checkpoint SHA-256:
+  `10ab845e136d9011f9322848fe43ee1d6ae76b0cb655cd9440d1fd04c09c6fc1`;
+- ONNX SHA-256:
+  `6eef7579599dff7fe038cc7580bd8772116ec8f52cbecbb84044ec88c4695964`;
+- golden NPZ SHA-256:
+  `42d928db3e81c9c79c7104090b1b2296a23fb0e42a749e941b1f08f1d7c2f648`.
+
+See [`reproducibility.md`](reproducibility.md) for the complete tracked artifact
+inventory and clean-checkout workflows.

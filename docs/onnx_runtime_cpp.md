@@ -35,14 +35,16 @@ the CPU provider.
 
 ## Build and run
 
-From repository root, convert the existing NPZ golden fixture without
-recomputing predictions, then configure and build:
+From repository root, configure and build directly. The ONNX graph and C++
+golden fixture are tracked, so Python is not part of this deployment path:
 
 ```bash
-uv run --project python python python/scripts/export_golden_cpp.py
-cmake -S . -B build
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 ```
+
+`python/scripts/export_golden_cpp.py` remains available to audit or regenerate
+the binary fixture from the tracked NPZ, but running it is optional.
 
 Run the one-sample demos:
 

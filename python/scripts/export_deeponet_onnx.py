@@ -14,10 +14,12 @@ from deeponet_irrigation.onnx_deployment import (
     ONNX_OPSET,
     ONNX_OUTPUT_NAME,
     DeepONetONNXWrapper,
+    export_onnx_model,
     load_frozen_deeponet,
     prepare_onnx_inputs,
     pytorch_deployment_prediction,
     sample_batch,
+    validate_onnx_model_contract,
 )
 from deeponet_irrigation.project_paths import REPOSITORY_ROOT
 from deeponet_irrigation.training import write_json
@@ -32,6 +34,13 @@ HORIZONS = (1, 3, 6, 12, 24)
 BATCH_SIZES = (1, 8, 32, 128)
 ABSOLUTE_TOLERANCE = 1e-4
 RELATIVE_TOLERANCE = 1e-5
+
+
+def portable_artifact_path(path: Path) -> str:
+    try:
+        return str(path.resolve().relative_to(ROOT.resolve()))
+    except ValueError:
+        return str(path)
 
 
 def parse_args() -> argparse.Namespace:
@@ -59,58 +68,15 @@ def audit_checkpoint(
     return model, checkpoint, validation
 
 
-def export_model(wrapper: DeepONetONNXWrapper, output_path: Path) -> None:
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    example = (
-        torch.zeros(2, wrapper.branch_input_dimension, dtype=torch.float32),
-        torch.zeros(2, 1, dtype=torch.float32),
-        torch.zeros(2, 1, dtype=torch.float32),
-    )
-    torch.onnx.export(
-        wrapper,
-        example,
-        output_path,
-        export_params=True,
-        opset_version=ONNX_OPSET,
-        do_constant_folding=True,
-        input_names=list(ONNX_INPUT_NAMES),
-        output_names=[ONNX_OUTPUT_NAME],
-        dynamic_axes={
-            "branch_input": {0: "batch"},
-            "horizon": {0: "batch"},
-            "current_moisture": {0: "batch"},
-            "prediction": {0: "batch"},
-        },
-        training=torch.onnx.TrainingMode.EVAL,
-        dynamo=False,
-    )
-
-
-def validate_onnx_model(
-    output_path: Path, branch_input_dimension: int
-) -> tuple[Any, Any, list[str]]:
+def print_onnx_contract(
+    output_path: Path,
+    graph: Any,
+    session: Any,
+    providers: list[str],
+) -> None:
     import onnx
     import onnxruntime as ort
 
-    graph = onnx.load(output_path)
-    onnx.checker.check_model(graph)
-    providers = ort.get_available_providers()
-    session = ort.InferenceSession(
-        str(output_path), providers=["CPUExecutionProvider"]
-    )
-    expected_inputs = {
-        "branch_input": ["batch", branch_input_dimension],
-        "horizon": ["batch", 1],
-        "current_moisture": ["batch", 1],
-    }
-    actual_inputs = {value.name: value.shape for value in session.get_inputs()}
-    if actual_inputs != expected_inputs:
-        raise RuntimeError(f"Unexpected ONNX inputs: {actual_inputs}")
-    outputs = session.get_outputs()
-    if len(outputs) != 1 or outputs[0].name != ONNX_OUTPUT_NAME:
-        raise RuntimeError("Unexpected ONNX output names")
-    if outputs[0].shape != ["batch", 1]:
-        raise RuntimeError(f"Unexpected ONNX output shape: {outputs[0].shape}")
     print(f"ONNX: {onnx.__version__}")
     print(f"ONNX Runtime: {ort.__version__}")
     print(f"Opset: {graph.opset_import[0].version}")
@@ -120,7 +86,6 @@ def validate_onnx_model(
         print(f"Output: {value.name} {value.shape} {value.type}")
     print(f"Available providers: {providers}")
     print(f"Model size: {output_path.stat().st_size} bytes")
-    return graph, session, providers
 
 
 def equivalence_checks(
@@ -241,7 +206,7 @@ def deployment_metadata(
     ]
     return {
         "model_name": "deeponet_reference",
-        "checkpoint_source": str(checkpoint_path),
+        "checkpoint_source": portable_artifact_path(checkpoint_path),
         "onnx_filename": onnx_path.name,
         "onnx_file_present": onnx_path.exists(),
         "onnx_opset": ONNX_OPSET,
@@ -313,7 +278,7 @@ def deployment_metadata(
             "absolute_tolerance": equivalence["absolute_tolerance"],
             "relative_tolerance": equivalence["relative_tolerance"],
             "overall": equivalence["overall"],
-            "report": str(DEFAULT_EQUIVALENCE_REPORT),
+            "report": portable_artifact_path(DEFAULT_EQUIVALENCE_REPORT),
         },
         "golden_test_vectors": golden_path.name,
     }
@@ -323,10 +288,11 @@ def main() -> None:
     args = parse_args()
     model, _, _ = audit_checkpoint(args.checkpoint)
     wrapper = DeepONetONNXWrapper(model).eval()
-    export_model(wrapper, args.output)
-    _, session, providers = validate_onnx_model(
+    export_onnx_model(wrapper, args.output)
+    graph, session, providers = validate_onnx_model_contract(
         args.output, wrapper.branch_input_dimension
     )
+    print_onnx_contract(args.output, graph, session, providers)
     equivalence = equivalence_checks(model, wrapper, session)
     metadata_path = args.output.with_suffix(".metadata.json")
     golden_path = args.output.with_name(f"{args.output.stem}_golden.npz")

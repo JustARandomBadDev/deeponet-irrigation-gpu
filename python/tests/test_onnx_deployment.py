@@ -33,9 +33,16 @@ ONNX_ARTIFACT_AVAILABLE = ONNX_AVAILABLE and ONNX_PATH.exists()
 class ONNXDeploymentTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.dataset = PreparedTemporalDataset(DATA_DIR, "validation")
+        deployment = json.loads(METADATA_PATH.read_text(encoding="utf-8"))
+        checkpoint = torch.load(CHECKPOINT, map_location="cpu", weights_only=True)
+        model_metadata = {
+            **checkpoint["preprocessing_contract"],
+            "normalization": {
+                "statistics": deployment["historical_feature_normalization"]
+            },
+        }
         cls.model, cls.checkpoint = load_frozen_deeponet(
-            CHECKPOINT, cls.dataset.metadata, torch.device("cpu")
+            CHECKPOINT, model_metadata, torch.device("cpu")
         )
         cls.wrapper = DeepONetONNXWrapper(cls.model).eval()
 
@@ -45,8 +52,11 @@ class ONNXDeploymentTests(unittest.TestCase):
         self.assertEqual(self.model.trunk_input_dimension, 1)
 
     def test_prepared_contract_matches_frozen_pytorch_model(self) -> None:
+        if not DATA_DIR.is_dir():
+            self.skipTest("prepared dataset unavailable")
+        dataset = PreparedTemporalDataset(DATA_DIR, "validation")
         history, horizons, _, _ = sample_batch(
-            self.dataset, horizon_hours=12, batch_size=8
+            dataset, horizon_hours=12, batch_size=8
         )
         inputs = prepare_onnx_inputs(self.model, history, horizons)
         self.assertEqual(inputs["branch_input"].shape, (8, 723))
@@ -99,11 +109,12 @@ class ONNXDeploymentTests(unittest.TestCase):
         session = ort.InferenceSession(
             str(ONNX_PATH), providers=["CPUExecutionProvider"]
         )
+        with np.load(GOLDEN_PATH, allow_pickle=False) as values:
+            fixture = {name: values[name] for name in ONNX_INPUT_NAMES}
         for batch_size in (1, 8):
-            history, horizons, _, _ = sample_batch(
-                self.dataset, horizon_hours=24, batch_size=batch_size
-            )
-            inputs = prepare_onnx_inputs(self.model, history, horizons)
+            inputs = {
+                name: value[:batch_size] for name, value in fixture.items()
+            }
             expected = pytorch_deployment_prediction(self.wrapper, inputs)
             actual = session.run(
                 None, {name: inputs[name] for name in ONNX_INPUT_NAMES}
@@ -123,6 +134,13 @@ class ONNXDeploymentTests(unittest.TestCase):
         )
         self.assertEqual(
             metadata["derived_trend_features"]["onnx_branch_values"], "normalized"
+        )
+        self.assertEqual(
+            metadata["checkpoint_source"], "models/deeponet_reference.pt"
+        )
+        self.assertEqual(
+            metadata["numerical_equivalence"]["report"],
+            "results/deeponet_onnx_equivalence.json",
         )
 
     @unittest.skipUnless(GOLDEN_PATH.exists(), "Golden test vectors unavailable")

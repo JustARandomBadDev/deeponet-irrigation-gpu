@@ -10,6 +10,23 @@ Shared artifacts remain at repository root: `data/`, `models/`, `results/`, and
 `uv run --project python`; this keeps the future C++ project and Python
 environment cleanly separated.
 
+Reproducibility is split deliberately:
+
+- **C++ deployment (primary):** the frozen ONNX model and C++ golden fixture
+  are tracked, so a clean checkout can build, validate, and benchmark without
+  Python, dataset setup, or retraining.
+- **Python frozen-model verification:** the frozen PyTorch checkpoint is
+  tracked; `setup-onnx` rebuilds and validates all deployment artifacts from
+  that checkpoint and the tracked deployment metadata/golden inputs, without
+  dataset setup or retraining.
+- **Training/research:** all scripts and curated selection logs are present,
+  but the historical bounded searches were sequences of individual experiments,
+  not a single one-command tuning pipeline.
+
+Exact clean-checkout commands, artifact hashes, and the retained scientific
+records are documented in
+[`docs/reproducibility.md`](docs/reproducibility.md).
+
 ## Dataset setup
 
 The data tooling is pinned to version 2 of *Soil Moisture, Irrigation Actuator
@@ -32,8 +49,9 @@ validates and reuses both the archive and extracted files.
 downloaded files, then streams every CSV in chunks to report shape, schema,
 missing values, documented timestamp ranges, and documented sector identifiers.
 
-Downloaded and generated artifacts under `data/`, `models/`, and `results/`
-are intentionally excluded from Git.
+Downloaded datasets and bulk generated artifacts remain excluded from Git. The
+small frozen deployment files under `models/` and selected scientific JSON
+summaries under `results/` are explicit exceptions.
 
 ## Temporal dataset
 
@@ -121,6 +139,10 @@ overwrite the last MLP test artifacts. Evaluation reports MAE, RMSE, and R²
 overall and per horizon, plus bias and errors for nearly unchanged and changing
 samples.
 
+These commands are research entry points, not a claim that one invocation
+replays every historical model-selection decision. The curated experiment logs
+record the bounded run sequence; intermediate checkpoints remain untracked.
+
 ## DeepONet reference
 
 The frozen PyTorch reference is a residual Deep Operator Network. Its Branch
@@ -154,11 +176,20 @@ from the immutable saved predictions.
 
 ## ONNX deployment
 
-Export the frozen checkpoint and run the mandatory PyTorch/ONNX Runtime
-equivalence checks with:
+The recommended dataset-independent deployment setup is:
 
 ```bash
 uv sync --project python
+uv run --project python setup-onnx
+```
+
+`setup-onnx` never trains a model. It loads the frozen
+`models/deeponet_reference.pt`, validates its architecture, exports and checks
+the ONNX graph, verifies PyTorch/ONNX equivalence on the tracked golden inputs,
+and refreshes both Python and C++ golden fixtures. The original full-dataset
+export and inference inspection commands remain available for research audits:
+
+```bash
 uv run --project python python python/scripts/export_deeponet_onnx.py
 uv run --project python python python/scripts/infer_onnx.py
 ```
@@ -175,6 +206,10 @@ with its checkpointed training mean and standard deviation. The exact feature
 layout and C++ preprocessing contract are documented in
 [`docs/onnx_deployment.md`](docs/onnx_deployment.md).
 
+Normal C++ users do not need uv, Python, PyTorch, or the dataset: the checked-in
+ONNX graph and binary golden fixture are consumed directly by the root CMake
+project.
+
 ## C++ ONNX Runtime
 
 The root CMake project downloads a pinned official ONNX Runtime 1.30.0 CUDA 13
@@ -183,7 +218,6 @@ and CUDA providers consume the frozen ONNX graph directly and are checked
 against the same deterministic golden vectors at batch sizes 1, 8, and 10.
 
 ```bash
-uv run --project python python python/scripts/export_golden_cpp.py
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 ./build/deeponet_golden_test --cpu
@@ -198,6 +232,7 @@ reproducible CPU, naive-CUDA, and CUDA-I/O-Binding performance experiment is
 documented in [`docs/benchmark.md`](docs/benchmark.md). Profiling-guided GPU
 optimization remains a later phase.
 
-Generated checkpoints and ONNX binaries are stored under `models/`; deployment
-metadata and compact golden fixtures may be versioned there. Metrics,
-prediction arrays, and plots are stored under the ignored `results/` tree.
+The six frozen deployment artifacts under `models/` are versioned. Other
+checkpoints remain generated and ignored. Results follow the same policy: only
+the final selection/evaluation/equivalence JSON records are versioned; prediction
+arrays, plots, and temporary outputs remain ignored.

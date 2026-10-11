@@ -1,0 +1,33 @@
+{
+  "format": "deeponet-golden-v1",
+  "endianness": "little",
+  "dtype": "float32",
+  "header": {
+    "magic": "DONGOLD1",
+    "case_count": 10,
+    "branch_dimension": 723
+  },
+  "record_layout": [
+    {
+      "name": "branch_input",
+      "float32_count": 723
+    },
+    {
+      "name": "horizon",
+      "float32_count": 1
+    },
+    {
+      "name": "current_moisture",
+      "float32_count": 1
+    },
+    {
+      "name": "expected_prediction",
+      "float32_count": 1
+    }
+  ],
+  "source": "models/deeponet_reference_golden.npz",
+  "source_sha256": "42d928db3e81c9c79c7104090b1b2296a23fb0e42a749e941b1f08f1d7c2f648",
+  "binary": "models/deeponet_reference_golden.bin",
+  "binary_size_bytes": 29056,
+  "expected_values_recomputed": false
+}

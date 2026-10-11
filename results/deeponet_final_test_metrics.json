@@ -1,0 +1,289 @@
+{
+  "created_at_utc": "2026-10-08T17:39:29.919723+00:00",
+  "this_is_the_only_final_deeponet_test_evaluation": true,
+  "selection_frozen_before_test": true,
+  "selection": {
+    "checkpoint": "/home/chef/Dev/deeponet-irrigation-gpu/models/deeponet_reference.pt",
+    "uses": "validation only",
+    "id": "trends_s42",
+    "configuration": "initial_trends",
+    "seed": 42,
+    "validation_metrics": {
+      "overall": {
+        "sample_count": 4235,
+        "mae": 0.5304329341811863,
+        "rmse": 1.0292340899441668,
+        "r2": 0.46198575393534425
+      },
+      "by_horizon": {
+        "1h": {
+          "sample_count": 905,
+          "mae": 0.45695949575519035,
+          "rmse": 0.9874763882280322,
+          "r2": 0.5146832686870075
+        },
+        "3h": {
+          "sample_count": 882,
+          "mae": 0.3423594952710902,
+          "rmse": 0.8335453314819509,
+          "r2": 0.6247935503061254
+        },
+        "6h": {
+          "sample_count": 864,
+          "mae": 0.40410877598656547,
+          "rmse": 0.8488999611289882,
+          "r2": 0.6092309779789884
+        },
+        "12h": {
+          "sample_count": 828,
+          "mae": 0.648011981577113,
+          "rmse": 1.0881335049281933,
+          "r2": 0.40400820728764986
+        },
+        "24h": {
+          "sample_count": 756,
+          "mae": 0.8533996753591709,
+          "rmse": 1.3549538410901896,
+          "r2": 0.153817767608164
+        }
+      }
+    },
+    "validation_change_status": {
+      "nearly_unchanged": {
+        "sample_count": 3477,
+        "mae": 0.4699580708488089,
+        "rmse": 0.6124793670834753,
+        "r2": 0.705478584175357
+      },
+      "changing": {
+        "sample_count": 758,
+        "mae": 0.807835440522448,
+        "rmse": 2.0488434564906326,
+        "r2": -0.08404819965740429
+      }
+    },
+    "validation_bias": {
+      "mean_prediction": 60.33280915639758,
+      "mean_target": 60.50767414403778,
+      "mean_signed_error": -0.1748649876402007
+    },
+    "seed_robustness": {
+      "seeds": [
+        42,
+        123,
+        456
+      ],
+      "overall_rmse_values": [
+        1.0292340899441668,
+        1.2634047994246524,
+        1.067914693170047
+      ],
+      "overall_rmse_mean": 1.1201845275129554,
+      "overall_rmse_std": 0.10249579497496412,
+      "changing_rmse_values": [
+        2.0488434564906326,
+        2.645564355932498,
+        2.1337620622998372
+      ],
+      "changing_rmse_mean": 2.276056624907656,
+      "changing_rmse_std": 0.26357132477881584
+    },
+    "selected_at_utc": "2026-10-08T17:38:27.598375+00:00"
+  },
+  "test": {
+    "persistence": {
+      "metrics": {
+        "overall": {
+          "sample_count": 5097,
+          "mae": 0.2742789876397881,
+          "rmse": 1.0488836708956866,
+          "r2": -0.10733785061735657
+        },
+        "by_horizon": {
+          "1h": {
+            "sample_count": 1067,
+            "mae": 0.13776944704779756,
+            "rmse": 0.9556716701584246,
+            "r2": 0.09560030042528345
+          },
+          "3h": {
+            "sample_count": 1055,
+            "mae": 0.2123222748815166,
+            "rmse": 1.0007106479636696,
+            "r2": -0.015515988620393495
+          },
+          "6h": {
+            "sample_count": 1037,
+            "mae": 0.2700096432015429,
+            "rmse": 1.0427228653690088,
+            "r2": -0.05595855343429745
+          },
+          "12h": {
+            "sample_count": 1005,
+            "mae": 0.33930348258706466,
+            "rmse": 1.092033567905692,
+            "r2": -0.1226365766501325
+          },
+          "24h": {
+            "sample_count": 933,
+            "mae": 0.43515541264737406,
+            "rmse": 1.1577133095810621,
+            "r2": -0.5868922405644017
+          }
+        }
+      },
+      "change_status": {
+        "nearly_unchanged": {
+          "sample_count": 4164,
+          "mae": 0.0,
+          "rmse": 0.0,
+          "r2": 1.0
+        },
+        "changing": {
+          "sample_count": 933,
+          "mae": 1.4983922829581993,
+          "rmse": 2.4515672962273345,
+          "r2": -0.9977331800354887
+        }
+      },
+      "bias": {
+        "mean_prediction": 55.79154404551697,
+        "mean_target": 55.68265646458701,
+        "mean_signed_error": 0.1088875809299588
+      }
+    },
+    "frozen_mlp": {
+      "metrics": {
+        "overall": {
+          "sample_count": 5097,
+          "mae": 0.5678149764622477,
+          "rmse": 0.9478043828781978,
+          "r2": 0.09580329162685941
+        },
+        "by_horizon": {
+          "1h": {
+            "sample_count": 1067,
+            "mae": 0.35297612241192633,
+            "rmse": 0.7716891682309182,
+            "r2": 0.4103045266091886
+          },
+          "3h": {
+            "sample_count": 1055,
+            "mae": 0.4475317534677225,
+            "rmse": 0.8337406386093072,
+            "r2": 0.2950932570283873
+          },
+          "6h": {
+            "sample_count": 1037,
+            "mae": 0.5470194545293383,
+            "rmse": 0.9027943244639435,
+            "r2": 0.20843475310864235
+          },
+          "12h": {
+            "sample_count": 1005,
+            "mae": 0.679892738304328,
+            "rmse": 1.002343102473546,
+            "r2": 0.05419844524404227
+          },
+          "24h": {
+            "sample_count": 933,
+            "mae": 0.8519078629832048,
+            "rmse": 1.2051767248975251,
+            "r2": -0.7196768927615065
+          }
+        }
+      },
+      "change_status": {
+        "nearly_unchanged": {
+          "sample_count": 4164,
+          "mae": 0.4804462245974142,
+          "rmse": 0.5900328631301754,
+          "r2": 0.3456048142593863
+        },
+        "changing": {
+          "sample_count": 933,
+          "mae": 0.9577436825342373,
+          "rmse": 1.8313555086855164,
+          "r2": -0.11479538605982276
+        }
+      },
+      "bias": {
+        "mean_prediction": 55.33684930844426,
+        "mean_target": 55.68265646458701,
+        "mean_signed_error": -0.34580715614275437
+      }
+    },
+    "deeponet": {
+      "metrics": {
+        "overall": {
+          "sample_count": 5097,
+          "mae": 0.8389671809162981,
+          "rmse": 1.2112477782899636,
+          "r2": -0.47669730852838965
+        },
+        "by_horizon": {
+          "1h": {
+            "sample_count": 1067,
+            "mae": 0.44943827921358803,
+            "rmse": 0.8377439138312104,
+            "r2": 0.3050308153166893
+          },
+          "3h": {
+            "sample_count": 1055,
+            "mae": 0.5208923556793358,
+            "rmse": 0.8876972224591739,
+            "r2": 0.20090310027239366
+          },
+          "6h": {
+            "sample_count": 1037,
+            "mae": 0.7315240343143533,
+            "rmse": 1.0487833641714237,
+            "r2": -0.06826907945492766
+          },
+          "12h": {
+            "sample_count": 1005,
+            "mae": 1.156238859565697,
+            "rmse": 1.439627255131849,
+            "r2": -0.951045203270243
+          },
+          "24h": {
+            "sample_count": 933,
+            "mae": 1.4217718805147521,
+            "rmse": 1.6929966243694214,
+            "r2": -2.3935759127957907
+          }
+        }
+      },
+      "change_status": {
+        "nearly_unchanged": {
+          "sample_count": 4164,
+          "mae": 0.78584948419723,
+          "rmse": 0.9994837236764841,
+          "r2": -0.8777559440041913
+        },
+        "changing": {
+          "sample_count": 933,
+          "mae": 1.076032656948666,
+          "rmse": 1.8858686695258555,
+          "r2": -0.18215040491962586
+        }
+      },
+      "bias": {
+        "mean_prediction": 55.03551830870277,
+        "mean_target": 55.68265646458701,
+        "mean_signed_error": -0.6471381558842441
+      }
+    }
+  },
+  "frozen_mlp_source": {
+    "metrics": "/home/chef/Dev/deeponet-irrigation-gpu/results/final_frozen_mlp_metrics.json",
+    "predictions": "/home/chef/Dev/deeponet-irrigation-gpu/results/final_frozen_mlp_predictions.npz",
+    "prior_report_flag": true
+  },
+  "runtime": {
+    "torch_version": "2.14.1+cu130",
+    "device": "cpu",
+    "gpu_name": null,
+    "deeponet_inference_seconds": 0.1726385300007678
+  }
+}

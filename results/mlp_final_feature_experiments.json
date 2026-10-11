@@ -1,0 +1,906 @@
+{
+  "created_at_utc": "2026-10-07T18:17:52.662098+00:00",
+  "selection_uses": "train and validation only; test artifacts are not loaded",
+  "maximum_training_runs": 6,
+  "control": {
+    "id": "control",
+    "checkpoint": "/home/chef/Dev/deeponet-irrigation-gpu/models/mlp_baseline_control.pt",
+    "features": [],
+    "validation_metrics": {
+      "overall": {
+        "sample_count": 4235,
+        "mae": 0.3434924597441798,
+        "rmse": 0.9346521163200633,
+        "r2": 0.5563245094185294
+      },
+      "by_horizon": {
+        "1h": {
+          "sample_count": 905,
+          "mae": 0.25200006895961025,
+          "rmse": 0.8863786386689928,
+          "r2": 0.608969722193845
+        },
+        "3h": {
+          "sample_count": 882,
+          "mae": 0.2693460382301521,
+          "rmse": 0.8040449833994862,
+          "r2": 0.6508817583870206
+        },
+        "6h": {
+          "sample_count": 864,
+          "mae": 0.29120525165840433,
+          "rmse": 0.8222307551081663,
+          "r2": 0.6333982487946084
+        },
+        "12h": {
+          "sample_count": 828,
+          "mae": 0.3534638916236767,
+          "rmse": 0.9266775005025435,
+          "r2": 0.5677518427559222
+        },
+        "24h": {
+          "sample_count": 756,
+          "mae": 0.5883569566030351,
+          "rmse": 1.2189035185660975,
+          "r2": 0.3152160660906961
+        }
+      }
+    },
+    "validation_change_status": {
+      "nearly_unchanged": {
+        "sample_count": 3477,
+        "mae": 0.17830141872244729,
+        "rmse": 0.2466733951291502,
+        "r2": 0.9522274332098833
+      },
+      "changing": {
+        "sample_count": 758,
+        "mae": 1.1012355331380639,
+        "rmse": 2.1451364469909997,
+        "r2": -0.18834045469168048
+      }
+    },
+    "validation_bias": {
+      "mean_prediction": 60.65938496234988,
+      "mean_target": 60.50767414403778,
+      "mean_signed_error": 0.15171081831210337
+    },
+    "seed_robustness": {
+      "calibration_fixed_from_seed_42": {
+        "alpha": 1.0,
+        "deadband": 0.0
+      },
+      "runs": [
+        {
+          "id": "pc_large_mse_s42",
+          "seed": 42,
+          "validation_metrics": {
+            "overall": {
+              "sample_count": 4235,
+              "mae": 0.3434924597441798,
+              "rmse": 0.9346521163200633,
+              "r2": 0.5563245094185294
+            },
+            "by_horizon": {
+              "1h": {
+                "sample_count": 905,
+                "mae": 0.25200006895961025,
+                "rmse": 0.8863786386689928,
+                "r2": 0.608969722193845
+              },
+              "3h": {
+                "sample_count": 882,
+                "mae": 0.2693460382301521,
+                "rmse": 0.8040449833994862,
+                "r2": 0.6508817583870206
+              },
+              "6h": {
+                "sample_count": 864,
+                "mae": 0.29120525165840433,
+                "rmse": 0.8222307551081663,
+                "r2": 0.6333982487946084
+              },
+              "12h": {
+                "sample_count": 828,
+                "mae": 0.3534638916236767,
+                "rmse": 0.9266775005025435,
+                "r2": 0.5677518427559222
+              },
+              "24h": {
+                "sample_count": 756,
+                "mae": 0.5883569566030351,
+                "rmse": 1.2189035185660975,
+                "r2": 0.3152160660906961
+              }
+            }
+          },
+          "validation_change_status": {
+            "nearly_unchanged": {
+              "sample_count": 3477,
+              "mae": 0.17830141872244729,
+              "rmse": 0.2466733951291502,
+              "r2": 0.9522274332098833
+            },
+            "changing": {
+              "sample_count": 758,
+              "mae": 1.1012355331380639,
+              "rmse": 2.1451364469909997,
+              "r2": -0.18834045469168048
+            }
+          },
+          "validation_bias": {
+            "mean_prediction": 60.65938496234988,
+            "mean_target": 60.50767414403778,
+            "mean_signed_error": 0.15171081831210337
+          }
+        },
+        {
+          "id": "pc_large_mse_s123",
+          "seed": 123,
+          "validation_metrics": {
+            "overall": {
+              "sample_count": 4235,
+              "mae": 0.4906383744096812,
+              "rmse": 0.972142858252721,
+              "r2": 0.5200172486389137
+            },
+            "by_horizon": {
+              "1h": {
+                "sample_count": 905,
+                "mae": 0.4870908073298839,
+                "rmse": 1.008754460659097,
+                "r2": 0.49354278742951463
+              },
+              "3h": {
+                "sample_count": 882,
+                "mae": 0.45483720653992393,
+                "rmse": 0.8665855030521614,
+                "r2": 0.59445907508508
+              },
+              "6h": {
+                "sample_count": 864,
+                "mae": 0.4541460319801613,
+                "rmse": 0.8433503069405109,
+                "r2": 0.6143235550959065
+              },
+              "12h": {
+                "sample_count": 828,
+                "mae": 0.4950976671228086,
+                "rmse": 0.9721878293873217,
+                "r2": 0.5242527647012052
+              },
+              "24h": {
+                "sample_count": 756,
+                "mae": 0.5734747074268483,
+                "rmse": 1.1626751140909912,
+                "r2": 0.37693744024882847
+              }
+            }
+          },
+          "validation_change_status": {
+            "nearly_unchanged": {
+              "sample_count": 3477,
+              "mae": 0.4323631793491999,
+              "rmse": 0.5116481319899787,
+              "r2": 0.7944692820278372
+            },
+            "changing": {
+              "sample_count": 758,
+              "mae": 0.7579508456831557,
+              "rmse": 2.019729254050737,
+              "r2": -0.05345830244636751
+            }
+          },
+          "validation_bias": {
+            "mean_prediction": 60.37731332610039,
+            "mean_target": 60.50767414403778,
+            "mean_signed_error": -0.13036081793738932
+          }
+        },
+        {
+          "id": "pc_large_mse_s456",
+          "seed": 456,
+          "validation_metrics": {
+            "overall": {
+              "sample_count": 4235,
+              "mae": 0.4162113401374682,
+              "rmse": 0.9661921067977484,
+              "r2": 0.5258754742376359
+            },
+            "by_horizon": {
+              "1h": {
+                "sample_count": 905,
+                "mae": 0.3934516906738281,
+                "rmse": 0.9856819961076624,
+                "r2": 0.5164454521639898
+              },
+              "3h": {
+                "sample_count": 882,
+                "mae": 0.35276385283524214,
+                "rmse": 0.8545669074774541,
+                "r2": 0.6056298911039681
+              },
+              "6h": {
+                "sample_count": 864,
+                "mae": 0.3345793529793068,
+                "rmse": 0.8369941980792464,
+                "r2": 0.6201151310655466
+              },
+              "12h": {
+                "sample_count": 828,
+                "mae": 0.4007097465404566,
+                "rmse": 0.9615075805940356,
+                "r2": 0.5346482638984016
+              },
+              "24h": {
+                "sample_count": 756,
+                "mae": 0.6277503916826198,
+                "rmse": 1.1837413118102005,
+                "r2": 0.35415469010275313
+              }
+            }
+          },
+          "validation_change_status": {
+            "nearly_unchanged": {
+              "sample_count": 3477,
+              "mae": 0.29857951250095494,
+              "rmse": 0.42130451661878365,
+              "r2": 0.8606438358457861
+            },
+            "changing": {
+              "sample_count": 758,
+              "mae": 0.9557969136099702,
+              "rmse": 2.097972650406116,
+              "r2": -0.1366602774596286
+            }
+          },
+          "validation_bias": {
+            "mean_prediction": 60.62460063317309,
+            "mean_target": 60.50767414403778,
+            "mean_signed_error": 0.11692648913530983
+          }
+        }
+      ],
+      "overall_rmse_mean": 0.9576623604568443,
+      "overall_rmse_std": 0.016451066067693202,
+      "changing_rmse_mean": 2.0876127838159513,
+      "changing_rmse_std": 0.05171870156344845
+    }
+  },
+  "experiments": [
+    {
+      "id": "trends_s42",
+      "features": [
+        "soil_moisture_trend_1h",
+        "soil_moisture_trend_3h",
+        "soil_moisture_trend_6h"
+      ],
+      "feature_normalization": {
+        "names": [
+          "soil_moisture_trend_1h",
+          "soil_moisture_trend_3h",
+          "soil_moisture_trend_6h"
+        ],
+        "means": [
+          -0.0220856102003643,
+          -0.03371833084947839,
+          -0.03525004139758238
+        ],
+        "stds": [
+          3.0377583368525927,
+          4.101410502543519,
+          5.02771715706713
+        ],
+        "fit_split": "train",
+        "sample_count": 24156
+      },
+      "input_dimension": 724,
+      "architecture": [
+        256,
+        128,
+        64
+      ],
+      "seed": 42,
+      "best_epoch": 19,
+      "best_validation_loss": 0.8055769974535162,
+      "validation_metrics": {
+        "overall": {
+          "sample_count": 4235,
+          "mae": 0.3598416577263734,
+          "rmse": 0.8975393995067161,
+          "r2": 0.5908594780888778
+        },
+        "by_horizon": {
+          "1h": {
+            "sample_count": 905,
+            "mae": 0.28146595401658536,
+            "rmse": 0.8714855018122478,
+            "r2": 0.6219996890581434
+          },
+          "3h": {
+            "sample_count": 882,
+            "mae": 0.2821098725541649,
+            "rmse": 0.7724785371761319,
+            "r2": 0.6777561099486304
+          },
+          "6h": {
+            "sample_count": 864,
+            "mae": 0.29515555611363165,
+            "rmse": 0.7812879035673413,
+            "r2": 0.6689990035205842
+          },
+          "12h": {
+            "sample_count": 828,
+            "mae": 0.3976216661757317,
+            "rmse": 0.8961443008400591,
+            "r2": 0.5957669600522524
+          },
+          "24h": {
+            "sample_count": 756,
+            "mae": 0.5769003762139214,
+            "rmse": 1.153343600597307,
+            "r2": 0.38689858047753356
+          }
+        }
+      },
+      "validation_change_status": {
+        "nearly_unchanged": {
+          "sample_count": 3477,
+          "mae": 0.26036061354673623,
+          "rmse": 0.3407253518894191,
+          "r2": 0.9088529009086062
+        },
+        "changing": {
+          "sample_count": 758,
+          "mae": 0.8161682944184557,
+          "rmse": 1.9920556138700172,
+          "r2": -0.024787822432036144
+        }
+      },
+      "validation_bias": {
+        "mean_prediction": 60.50689596381069,
+        "mean_target": 60.50767414403778,
+        "mean_signed_error": -0.0007781802270882527
+      },
+      "checkpoint": "/home/chef/Dev/deeponet-irrigation-gpu/models/final_feature_experiments/trends_s42.pt",
+      "validation_predictions": "/home/chef/Dev/deeponet-irrigation-gpu/results/final_feature_validation_predictions/trends_s42.npz",
+      "duration_seconds": 29.270832468999288,
+      "device": "cpu",
+      "gpu_name": null
+    },
+    {
+      "id": "water_s42",
+      "features": [
+        "irrigation_sum_1h",
+        "irrigation_sum_6h",
+        "irrigation_sum_24h",
+        "rain_sum_1h",
+        "rain_sum_6h",
+        "rain_sum_24h"
+      ],
+      "feature_normalization": {
+        "names": [
+          "irrigation_sum_1h",
+          "irrigation_sum_6h",
+          "irrigation_sum_24h",
+          "rain_sum_1h",
+          "rain_sum_6h",
+          "rain_sum_24h"
+        ],
+        "means": [
+          0.9934881976511842,
+          6.1128872991308985,
+          26.25446372384819,
+          0.30996749733345985,
+          1.8528548136333753,
+          7.434827852478113
+        ],
+        "stds": [
+          4.1646683720471165,
+          10.976532895748981,
+          16.35789699939578,
+          3.4882596240876613,
+          11.230456680526313,
+          25.856677547631296
+        ],
+        "fit_split": "train",
+        "sample_count": 24156
+      },
+      "input_dimension": 727,
+      "architecture": [
+        256,
+        128,
+        64
+      ],
+      "seed": 42,
+      "best_epoch": 2,
+      "best_validation_loss": 1.4414037767661363,
+      "validation_metrics": {
+        "overall": {
+          "sample_count": 4235,
+          "mae": 0.3960085295730104,
+          "rmse": 1.2005847642511376,
+          "r2": 0.26793253464647315
+        },
+        "by_horizon": {
+          "1h": {
+            "sample_count": 905,
+            "mae": 0.31496983733625045,
+            "rmse": 1.1855439485216681,
+            "r2": 0.30046871812047415
+          },
+          "3h": {
+            "sample_count": 882,
+            "mae": 0.33757920816642084,
+            "rmse": 1.1221945580777357,
+            "r2": 0.3199385377706322
+          },
+          "6h": {
+            "sample_count": 864,
+            "mae": 0.3578072786331177,
+            "rmse": 1.1117409974434664,
+            "r2": 0.32978469170126146
+          },
+          "12h": {
+            "sample_count": 828,
+            "mae": 0.4163070300926909,
+            "rmse": 1.175742580885258,
+            "r2": 0.30417439285420234
+          },
+          "24h": {
+            "sample_count": 756,
+            "mae": 0.5826135564733435,
+            "rmse": 1.4128821331973633,
+            "r2": 0.07991750609472859
+          }
+        }
+      },
+      "validation_change_status": {
+        "nearly_unchanged": {
+          "sample_count": 3477,
+          "mae": 0.17186446871468142,
+          "rmse": 0.18608048047390527,
+          "r2": 0.972814608535812
+        },
+        "changing": {
+          "sample_count": 758,
+          "mae": 1.4241733047767176,
+          "rmse": 2.809696408096128,
+          "r2": -1.0386836077819748
+        }
+      },
+      "validation_bias": {
+        "mean_prediction": 60.49422986639714,
+        "mean_target": 60.50767414403778,
+        "mean_signed_error": -0.013444277640638836
+      },
+      "checkpoint": "/home/chef/Dev/deeponet-irrigation-gpu/models/final_feature_experiments/water_s42.pt",
+      "validation_predictions": "/home/chef/Dev/deeponet-irrigation-gpu/results/final_feature_validation_predictions/water_s42.npz",
+      "duration_seconds": 10.888670195000486,
+      "device": "cpu",
+      "gpu_name": null
+    },
+    {
+      "id": "combined_s42",
+      "features": [
+        "soil_moisture_trend_1h",
+        "soil_moisture_trend_3h",
+        "soil_moisture_trend_6h",
+        "irrigation_sum_1h",
+        "irrigation_sum_6h",
+        "irrigation_sum_24h",
+        "rain_sum_1h",
+        "rain_sum_6h",
+        "rain_sum_24h"
+      ],
+      "feature_normalization": {
+        "names": [
+          "soil_moisture_trend_1h",
+          "soil_moisture_trend_3h",
+          "soil_moisture_trend_6h",
+          "irrigation_sum_1h",
+          "irrigation_sum_6h",
+          "irrigation_sum_24h",
+          "rain_sum_1h",
+          "rain_sum_6h",
+          "rain_sum_24h"
+        ],
+        "means": [
+          -0.0220856102003643,
+          -0.03371833084947839,
+          -0.03525004139758238,
+          0.9934881976511842,
+          6.1128872991308985,
+          26.25446372384819,
+          0.30996749733345985,
+          1.8528548136333753,
+          7.434827852478113
+        ],
+        "stds": [
+          3.0377583368525927,
+          4.101410502543519,
+          5.02771715706713,
+          4.1646683720471165,
+          10.976532895748981,
+          16.35789699939578,
+          3.4882596240876613,
+          11.230456680526313,
+          25.856677547631296
+        ],
+        "fit_split": "train",
+        "sample_count": 24156
+      },
+      "input_dimension": 730,
+      "architecture": [
+        256,
+        128,
+        64
+      ],
+      "seed": 42,
+      "best_epoch": 8,
+      "best_validation_loss": 0.8693480995286876,
+      "validation_metrics": {
+        "overall": {
+          "sample_count": 4235,
+          "mae": 0.48851509499578016,
+          "rmse": 0.9323883706372567,
+          "r2": 0.5584710881483488
+        },
+        "by_horizon": {
+          "1h": {
+            "sample_count": 905,
+            "mae": 0.478010339895006,
+            "rmse": 0.92441135497327,
+            "r2": 0.5746931602727567
+          },
+          "3h": {
+            "sample_count": 882,
+            "mae": 0.47188196160625706,
+            "rmse": 0.8316077825118621,
+            "r2": 0.6265358333495885
+          },
+          "6h": {
+            "sample_count": 864,
+            "mae": 0.49148892914807357,
+            "rmse": 0.8438984859717116,
+            "r2": 0.6138220115504395
+          },
+          "12h": {
+            "sample_count": 828,
+            "mae": 0.48582880969208797,
+            "rmse": 0.9570758326116712,
+            "r2": 0.5389281445105092
+          },
+          "24h": {
+            "sample_count": 756,
+            "mae": 0.5200390084079964,
+            "rmse": 1.1059089780017861,
+            "r2": 0.4362926873794807
+          }
+        }
+      },
+      "validation_change_status": {
+        "nearly_unchanged": {
+          "sample_count": 3477,
+          "mae": 0.45368398535275617,
+          "rmse": 0.5079294261822641,
+          "r2": 0.7974460572585516
+        },
+        "changing": {
+          "sample_count": 758,
+          "mae": 0.6482878763002582,
+          "rmse": 1.9166847814960697,
+          "r2": 0.051292295481378036
+        }
+      },
+      "validation_bias": {
+        "mean_prediction": 60.27478032027676,
+        "mean_target": 60.50767414403778,
+        "mean_signed_error": -0.23289382376102236
+      },
+      "checkpoint": "/home/chef/Dev/deeponet-irrigation-gpu/models/final_feature_experiments/combined_s42.pt",
+      "validation_predictions": "/home/chef/Dev/deeponet-irrigation-gpu/results/final_feature_validation_predictions/combined_s42.npz",
+      "duration_seconds": 17.42699348199949,
+      "device": "cpu",
+      "gpu_name": null
+    },
+    {
+      "id": "trends_s123",
+      "features": [
+        "soil_moisture_trend_1h",
+        "soil_moisture_trend_3h",
+        "soil_moisture_trend_6h"
+      ],
+      "feature_normalization": {
+        "names": [
+          "soil_moisture_trend_1h",
+          "soil_moisture_trend_3h",
+          "soil_moisture_trend_6h"
+        ],
+        "means": [
+          -0.0220856102003643,
+          -0.03371833084947839,
+          -0.03525004139758238
+        ],
+        "stds": [
+          3.0377583368525927,
+          4.101410502543519,
+          5.02771715706713
+        ],
+        "fit_split": "train",
+        "sample_count": 24156
+      },
+      "input_dimension": 724,
+      "architecture": [
+        256,
+        128,
+        64
+      ],
+      "seed": 123,
+      "best_epoch": 10,
+      "best_validation_loss": 0.8709101336729991,
+      "validation_metrics": {
+        "overall": {
+          "sample_count": 4235,
+          "mae": 0.4130720838886788,
+          "rmse": 0.9332256499465765,
+          "r2": 0.5576777513359124
+        },
+        "by_horizon": {
+          "1h": {
+            "sample_count": 905,
+            "mae": 0.3822747794304105,
+            "rmse": 0.9189461425265695,
+            "r2": 0.5797072077569598
+          },
+          "3h": {
+            "sample_count": 882,
+            "mae": 0.38417995219327966,
+            "rmse": 0.8214032974569049,
+            "r2": 0.6356450012452303
+          },
+          "6h": {
+            "sample_count": 864,
+            "mae": 0.3913142062999584,
+            "rmse": 0.8266045158168719,
+            "r2": 0.629487684879823
+          },
+          "12h": {
+            "sample_count": 828,
+            "mae": 0.419789627554336,
+            "rmse": 0.9430132784297641,
+            "r2": 0.5523778907726606
+          },
+          "24h": {
+            "sample_count": 756,
+            "mae": 0.5011555505177331,
+            "rmse": 1.1514364742705956,
+            "r2": 0.38892450776134724
+          }
+        }
+      },
+      "validation_change_status": {
+        "nearly_unchanged": {
+          "sample_count": 3477,
+          "mae": 0.3236674872972446,
+          "rmse": 0.39871770410131646,
+          "r2": 0.8751855137723271
+        },
+        "changing": {
+          "sample_count": 758,
+          "mae": 0.8231773376464844,
+          "rmse": 2.033864177943917,
+          "r2": -0.06825499671554924
+        }
+      },
+      "validation_bias": {
+        "mean_prediction": 60.504249205245884,
+        "mean_target": 60.50767414403778,
+        "mean_signed_error": -0.003424938791898797
+      },
+      "checkpoint": "/home/chef/Dev/deeponet-irrigation-gpu/models/final_feature_experiments/trends_s123.pt",
+      "validation_predictions": "/home/chef/Dev/deeponet-irrigation-gpu/results/final_feature_validation_predictions/trends_s123.npz",
+      "duration_seconds": 19.87095772400062,
+      "device": "cpu",
+      "gpu_name": null
+    },
+    {
+      "id": "trends_s456",
+      "features": [
+        "soil_moisture_trend_1h",
+        "soil_moisture_trend_3h",
+        "soil_moisture_trend_6h"
+      ],
+      "feature_normalization": {
+        "names": [
+          "soil_moisture_trend_1h",
+          "soil_moisture_trend_3h",
+          "soil_moisture_trend_6h"
+        ],
+        "means": [
+          -0.0220856102003643,
+          -0.03371833084947839,
+          -0.03525004139758238
+        ],
+        "stds": [
+          3.0377583368525927,
+          4.101410502543519,
+          5.02771715706713
+        ],
+        "fit_split": "train",
+        "sample_count": 24156
+      },
+      "input_dimension": 724,
+      "architecture": [
+        256,
+        128,
+        64
+      ],
+      "seed": 456,
+      "best_epoch": 5,
+      "best_validation_loss": 0.8880258409304208,
+      "validation_metrics": {
+        "overall": {
+          "sample_count": 4235,
+          "mae": 0.36795003861716674,
+          "rmse": 0.9423512182992896,
+          "r2": 0.5489849402583136
+        },
+        "by_horizon": {
+          "1h": {
+            "sample_count": 905,
+            "mae": 0.2861967687448744,
+            "rmse": 0.914345815403081,
+            "r2": 0.5839047219406304
+          },
+          "3h": {
+            "sample_count": 882,
+            "mae": 0.3059362251472041,
+            "rmse": 0.8300829817389196,
+            "r2": 0.627904113912863
+          },
+          "6h": {
+            "sample_count": 864,
+            "mae": 0.3356997216189349,
+            "rmse": 0.8473454229073306,
+            "r2": 0.6106608500520018
+          },
+          "12h": {
+            "sample_count": 828,
+            "mae": 0.3909606426810297,
+            "rmse": 0.9406520890949868,
+            "r2": 0.5546166659307469
+          },
+          "24h": {
+            "sample_count": 756,
+            "mae": 0.5498209201469624,
+            "rmse": 1.1748405219283298,
+            "r2": 0.36383065756441735
+          }
+        }
+      },
+      "validation_change_status": {
+        "nearly_unchanged": {
+          "sample_count": 3477,
+          "mae": 0.20080579791152686,
+          "rmse": 0.22792589676982022,
+          "r2": 0.959213043661139
+        },
+        "changing": {
+          "sample_count": 758,
+          "mae": 1.1346525781072854,
+          "rmse": 2.1732841915552825,
+          "r2": -0.21973105220117928
+        }
+      },
+      "validation_bias": {
+        "mean_prediction": 60.51227970866414,
+        "mean_target": 60.50767414403778,
+        "mean_signed_error": 0.004605564626358194
+      },
+      "checkpoint": "/home/chef/Dev/deeponet-irrigation-gpu/models/final_feature_experiments/trends_s456.pt",
+      "validation_predictions": "/home/chef/Dev/deeponet-irrigation-gpu/results/final_feature_validation_predictions/trends_s456.npz",
+      "duration_seconds": 14.254015810000055,
+      "device": "cpu",
+      "gpu_name": null
+    }
+  ],
+  "updated_at_utc": "2026-10-07T18:19:59.791140+00:00",
+  "trend_seed_robustness": {
+    "seeds": [
+      42,
+      123,
+      456
+    ],
+    "overall_rmse_values": [
+      0.8975393995067161,
+      0.9332256499465765,
+      0.9423512182992896
+    ],
+    "overall_rmse_mean": 0.9243720892508608,
+    "overall_rmse_std": 0.01933587216581575
+  },
+  "selected": {
+    "id": "trends_s42",
+    "checkpoint": "/home/chef/Dev/deeponet-irrigation-gpu/models/mlp_baseline_final.pt",
+    "features": [
+      "soil_moisture_trend_1h",
+      "soil_moisture_trend_3h",
+      "soil_moisture_trend_6h"
+    ],
+    "validation_metrics": {
+      "overall": {
+        "sample_count": 4235,
+        "mae": 0.3598416577263734,
+        "rmse": 0.8975393995067161,
+        "r2": 0.5908594780888778
+      },
+      "by_horizon": {
+        "1h": {
+          "sample_count": 905,
+          "mae": 0.28146595401658536,
+          "rmse": 0.8714855018122478,
+          "r2": 0.6219996890581434
+        },
+        "3h": {
+          "sample_count": 882,
+          "mae": 0.2821098725541649,
+          "rmse": 0.7724785371761319,
+          "r2": 0.6777561099486304
+        },
+        "6h": {
+          "sample_count": 864,
+          "mae": 0.29515555611363165,
+          "rmse": 0.7812879035673413,
+          "r2": 0.6689990035205842
+        },
+        "12h": {
+          "sample_count": 828,
+          "mae": 0.3976216661757317,
+          "rmse": 0.8961443008400591,
+          "r2": 0.5957669600522524
+        },
+        "24h": {
+          "sample_count": 756,
+          "mae": 0.5769003762139214,
+          "rmse": 1.153343600597307,
+          "r2": 0.38689858047753356
+        }
+      }
+    },
+    "validation_change_status": {
+      "nearly_unchanged": {
+        "sample_count": 3477,
+        "mae": 0.26036061354673623,
+        "rmse": 0.3407253518894191,
+        "r2": 0.9088529009086062
+      },
+      "changing": {
+        "sample_count": 758,
+        "mae": 0.8161682944184557,
+        "rmse": 1.9920556138700172,
+        "r2": -0.024787822432036144
+      }
+    },
+    "validation_bias": {
+      "mean_prediction": 60.50689596381069,
+      "mean_target": 60.50767414403778,
+      "mean_signed_error": -0.0007781802270882527
+    },
+    "seed_robustness": {
+      "seeds": [
+        42,
+        123,
+        456
+      ],
+      "overall_rmse_values": [
+        0.8975393995067161,
+        0.9332256499465765,
+        0.9423512182992896
+      ],
+      "overall_rmse_mean": 0.9243720892508608,
+      "overall_rmse_std": 0.01933587216581575
+    },
+    "selected_at_utc": "2026-10-07T18:20:17.722303+00:00"
+  }
+}

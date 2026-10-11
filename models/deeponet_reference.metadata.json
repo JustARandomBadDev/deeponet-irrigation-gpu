@@ -1,6 +1,6 @@
 {
   "model_name": "deeponet_reference",
-  "checkpoint_source": "/home/chef/Dev/deeponet-irrigation-gpu/models/deeponet_reference.pt",
+  "checkpoint_source": "models/deeponet_reference.pt",
   "onnx_filename": "deeponet_reference.onnx",
   "onnx_file_present": true,
   "onnx_opset": 17,
@@ -160,7 +160,7 @@
       "mean_absolute_error": 5.23674430041865e-07,
       "max_relative_error": 1.1691790291479265e-07
     },
-    "report": "/home/chef/Dev/deeponet-irrigation-gpu/results/deeponet_onnx_equivalence.json"
+    "report": "results/deeponet_onnx_equivalence.json"
   },
   "golden_test_vectors": "deeponet_reference_golden.npz"
 }
