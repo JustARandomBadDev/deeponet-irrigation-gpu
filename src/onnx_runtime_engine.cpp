@@ -19,7 +19,6 @@ namespace deeponet {
 namespace {
 
 constexpr std::size_t kBranchDimension = 723;
-constexpr std::size_t kMaximumIoBindingBatch = 4096;
 constexpr std::array<const char*, 3> kInputNames = {
     "branch_input",
     "horizon",
@@ -143,11 +142,12 @@ private:
 }  // namespace
 
 struct OnnxRuntimeEngine::CudaIoResources {
-    CudaIoResources()
-        : branch(kMaximumIoBindingBatch * kBranchDimension),
-          horizon(kMaximumIoBindingBatch),
-          current_moisture(kMaximumIoBindingBatch),
-          prediction(kMaximumIoBindingBatch) {
+    explicit CudaIoResources(std::size_t p_batch_capacity)
+        : branch(p_batch_capacity * kBranchDimension),
+          horizon(p_batch_capacity),
+          current_moisture(p_batch_capacity),
+          prediction(p_batch_capacity),
+          batch_capacity(p_batch_capacity) {
         tensors.reserve(4);
     }
 
@@ -157,6 +157,7 @@ struct OnnxRuntimeEngine::CudaIoResources {
     DeviceBuffer prediction;
     std::unique_ptr<Ort::IoBinding> binding;
     std::vector<Ort::Value> tensors;
+    std::size_t batch_capacity;
     std::size_t bound_batch = 0;
 };
 
@@ -305,9 +306,6 @@ void OnnxRuntimeEngine::infer_iobinding(
         p_current_moisture,
         p_batch_size
     );
-    if (p_batch_size > kMaximumIoBindingBatch) {
-        throw std::invalid_argument("I/O Binding supports a maximum batch of 4096");
-    }
     if (p_predictions.size() != p_batch_size) {
         throw std::invalid_argument("prediction span must contain batch_size floats");
     }
@@ -390,8 +388,8 @@ void OnnxRuntimeEngine::validate_inputs(
 }
 
 void OnnxRuntimeEngine::prepare_iobinding(std::size_t p_batch_size) {
-    if (!cuda_io_) {
-        cuda_io_ = std::make_unique<CudaIoResources>();
+    if (!cuda_io_ || cuda_io_->batch_capacity < p_batch_size) {
+        cuda_io_ = std::make_unique<CudaIoResources>(p_batch_size);
     }
     if (cuda_io_->binding && cuda_io_->bound_batch == p_batch_size) {
         return;

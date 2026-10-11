@@ -15,6 +15,7 @@
 #include <iostream>
 #include <map>
 #include <numeric>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -41,6 +42,7 @@ enum class BenchmarkMode {
 
 struct Options {
     std::string provider = "all";
+    std::optional<std::size_t> batch_size;
     std::size_t warmup_iterations = 100;
     std::size_t measured_iterations = 1000;
     std::size_t repetitions = 3;
@@ -105,6 +107,9 @@ deeponet::ExecutionProvider execution_provider(BenchmarkMode p_mode) {
 
 std::size_t parse_count(const char* p_text, const char* p_option) {
     const std::string text(p_text);
+    if (text.empty() || text.front() == '-') {
+        throw std::invalid_argument(std::string(p_option) + " must be positive");
+    }
     std::size_t consumed = 0;
     const unsigned long long value = std::stoull(text, &consumed);
     if (consumed != text.size() || value == 0) {
@@ -119,6 +124,9 @@ Options parse_options(int p_argc, char** p_argv) {
         const std::string_view argument(p_argv[i]);
         if (argument == "--provider" && i + 1 < p_argc) {
             options.provider = p_argv[i + 1];
+            i++;
+        } else if (argument == "--batch" && i + 1 < p_argc) {
+            options.batch_size = parse_count(p_argv[i + 1], "--batch");
             i++;
         } else if (argument == "--warmup" && i + 1 < p_argc) {
             options.warmup_iterations = parse_count(p_argv[i + 1], "--warmup");
@@ -136,7 +144,7 @@ Options parse_options(int p_argc, char** p_argv) {
             throw std::invalid_argument(
                 "Usage: ./build/deeponet_benchmark --provider "
                 "cpu|cuda|cuda-iobinding|all "
-                "[--warmup N] [--iterations N] [--repetitions N]"
+                "[--batch N] [--warmup N] [--iterations N] [--repetitions N]"
             );
         }
     }
@@ -168,6 +176,13 @@ std::vector<BenchmarkMode> selected_modes(const Options& p_options) {
         BenchmarkMode::Cuda,
         BenchmarkMode::CudaIoBinding,
     };
+}
+
+std::vector<std::size_t> selected_batch_sizes(const Options& p_options) {
+    if (p_options.batch_size) {
+        return {*p_options.batch_size};
+    }
+    return {kBatchSizes.begin(), kBatchSizes.end()};
 }
 
 BenchmarkInput prepare_input(
@@ -300,7 +315,7 @@ std::vector<BenchmarkResult> run_mode(
     );
     std::vector<BenchmarkResult> results;
 
-    for (const std::size_t batch_size : kBatchSizes) {
+    for (const std::size_t batch_size : selected_batch_sizes(p_options)) {
         const auto input = prepare_input(p_fixture, batch_size);
         std::vector<float> predictions(batch_size);
         run_inference(engine, p_mode, input, predictions, batch_size);
@@ -396,15 +411,19 @@ void print_results(const std::vector<BenchmarkResult>& p_results) {
     }
 }
 
-void print_speedups(const std::vector<BenchmarkResult>& p_results) {
+void print_speedups(
+    const std::vector<BenchmarkResult>& p_results,
+    const Options& p_options
+) {
     static constexpr std::array<BenchmarkMode, 3> modes = {
         BenchmarkMode::Cpu,
         BenchmarkMode::Cuda,
         BenchmarkMode::CudaIoBinding,
     };
+    const auto batch_sizes = selected_batch_sizes(p_options);
     const bool has_all_modes = std::all_of(
-        kBatchSizes.begin(),
-        kBatchSizes.end(),
+        batch_sizes.begin(),
+        batch_sizes.end(),
         [&p_results](std::size_t p_batch_size) {
             return std::all_of(
                 modes.begin(),
@@ -430,7 +449,7 @@ void print_speedups(const std::vector<BenchmarkResult>& p_results) {
                  "  I/O Binding improvement\n"
               << "---------------------------------------------------------------"
                  "----------\n";
-    for (const std::size_t batch_size : kBatchSizes) {
+    for (const std::size_t batch_size : batch_sizes) {
         const double cpu = aggregate_result(
             p_results,
             BenchmarkMode::Cpu,
@@ -544,7 +563,15 @@ void write_environment(
            << "  \"repetitions\": " << p_options.repetitions << ",\n"
            << "  \"benchmark_modes\": [\"cpu\", \"cuda\", "
               "\"cuda_iobinding\"],\n"
-           << "  \"batch_sizes\": [1, 8, 32, 128, 256, 512, 1024, 2048, 4096],\n"
+           << "  \"batch_sizes\": [";
+    const auto batch_sizes = selected_batch_sizes(p_options);
+    for (std::size_t i = 0; i < batch_sizes.size(); i++) {
+        if (i != 0) {
+            output << ", ";
+        }
+        output << batch_sizes[i];
+    }
+    output << "],\n"
            << "  \"input_source\": "
               "\"deterministic repetition of existing golden vectors\",\n"
            << "  \"available_execution_providers\": [";
@@ -636,7 +663,7 @@ int main(int argc, char** argv) {
         }
 
         print_results(results);
-        print_speedups(results);
+        print_speedups(results, options);
         const std::filesystem::path output_directory = "results/benchmark";
         std::filesystem::create_directories(output_directory);
         write_csv(output_directory / "onnx_runtime_benchmark.csv", results);
