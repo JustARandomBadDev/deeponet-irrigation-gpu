@@ -1,5 +1,7 @@
 # Carnet d'expérimentation — Prédiction de l'humidité des sols et accélération GPU
 
+English version: [experiment_en.md](experiment_en.md).
+
 Ce carnet reconstruit l'expérience dans son ordre logique, depuis les données
 agronomiques jusqu'aux optimisations GPU. Il ne décrit donc pas seulement le
 système final : il explique pourquoi chaque expérience a été menée, ce qu'elle
