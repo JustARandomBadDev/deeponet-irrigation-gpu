@@ -76,8 +76,7 @@ the dataset.
 
 - [Carnet d'expérimentation — Français](docs/experiment_fr.md)
 - [Experiment notebook — English](docs/experiment_en.md)
-- [Reproducibility](docs/reproducibility.md)
-- [Implementation](docs/implementation.md)
+- [Implementation and reproducibility](docs/implementation.md)
 
 ## Repository structure
 

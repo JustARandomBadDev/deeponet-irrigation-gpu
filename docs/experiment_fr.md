@@ -703,11 +703,9 @@ uv sync --project python
 uv run --project python setup-onnx
 ```
 
-Elle ne télécharge pas le dataset et n'entraîne rien. Les détails, prérequis et
-empreintes sont documentés dans [la note de reproductibilité](reproducibility.md),
-le [contrat ONNX](onnx_deployment.md), le
-[runtime C++](onnx_runtime_cpp.md) et le
-[rapport d'optimisation GPU](gpu_optimization_experiments.md).
+Elle ne télécharge pas le dataset et n'entraîne rien. Le contrat ONNX, les
+artefacts figés, les prérequis et les commandes reproductibles sont regroupés
+dans [la documentation d'implémentation](implementation.md).
 
 ## 20. Conclusion
 

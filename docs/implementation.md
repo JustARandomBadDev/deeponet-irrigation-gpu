@@ -83,9 +83,12 @@ The main executables are:
 - `deeponet_golden_test`: batch 1/8/10 correctness checks;
 - `deeponet_benchmark`: correctness prechecks and reproducible measurements.
 
+CUDA sessions disable CPU-provider fallback. A successful CUDA run therefore
+cannot silently execute unsupported graph operations on the CPU.
+
 ## 4. ONNX contract
 
-The canonical FP32 graph exposes exactly:
+The canonical FP32 graph uses ONNX opset 17 and exposes exactly:
 
 | Direction | Name               | Shape          | Type      |
 | --------- | ------------------ | -------------- | --------- |
@@ -94,11 +97,18 @@ The canonical FP32 graph exposes exactly:
 | Input     | `current_moisture` | `[batch, 1]`   | `float32` |
 | Output    | `prediction`       | `[batch, 1]`   | `float32` |
 
-`batch` is dynamic. The branch tensor contains the flattened normalized
-`[144, 5]` history followed by three normalized historical moisture trends.
+`batch` is dynamic. `branch_input` first contains the normalized `[144, 5]`
+history flattened in time-major order, with the feature dimension varying
+fastest. Its feature order is soil moisture, applied water, rain, air
+temperature, and air humidity. The final three values are current moisture
+minus moisture 1, 3, and 6 hours earlier, in that order. These differences are
+computed in physical units and then normalized with the training trend
+statistics: the graph receives normalized trends, not raw trends.
+
 `horizon` is `horizon_hours / 24`; `current_moisture` and `prediction` are in
-physical dataset units. Residual scaling and reconstruction are part of the
-graph, not reimplemented in C++.
+physical dataset units. Residual scaling and current-moisture reconstruction
+are part of the graph, not reimplemented in C++. Exact feature-normalization
+values are stored in `models/deeponet_reference.metadata.json`.
 
 ## 5. Benchmark modes
 
@@ -187,6 +197,14 @@ The CUDA commands require a compatible NVIDIA GPU/driver. The tests consume the
 tracked ONNX graph and binary fixture directly; Python, PyTorch, and the dataset
 are not required.
 
+The fixture is deliberately simple: the eight-byte magic `DONGOLD1`, followed
+by little-endian `uint32` case-count and branch-dimension fields, then one
+record per case containing 723 branch floats, one normalized horizon, one
+physical current-moisture value, and one expected prediction. Tests cover
+batches 1, 8, and 10 with a `1e-4` FP32 tolerance. On the reference machine,
+CPU matched the fixture exactly and CUDA's maximum absolute error was
+`3.8147e-6`.
+
 ### Run the canonical benchmark
 
 ```bash
@@ -220,16 +238,16 @@ a one-command reproduction path and is unnecessary for deployment.
 
 ## 8. Important artifacts
 
-| Path                                        | Purpose                                  |
-| ------------------------------------------- | ---------------------------------------- |
-| `models/deeponet_reference.pt`              | Frozen PyTorch source checkpoint         |
-| `models/deeponet_reference.onnx`            | Canonical FP32 C++ deployment model      |
-| `models/deeponet_reference.metadata.json`   | Input, normalization, and model contract |
-| `models/deeponet_reference_golden.npz`      | Python golden inputs and predictions     |
-| `models/deeponet_reference_golden.bin`      | C++-readable golden fixture              |
-| `models/deeponet_reference_golden.json`     | Golden binary format metadata            |
-| `models/deeponet_reference_fp16.onnx`       | Experimental converted FP16 graph        |
-| `results/gpu_optimization_experiments.json` | Curated final GPU summary                |
+| Path                                        | Purpose                                  | SHA-256 prefix |
+| ------------------------------------------- | ---------------------------------------- | -------------- |
+| `models/deeponet_reference.pt`              | Frozen PyTorch source checkpoint         | `10ab845e136d` |
+| `models/deeponet_reference.onnx`            | Canonical FP32 C++ deployment model      | `6eef7579599d` |
+| `models/deeponet_reference.metadata.json`   | Input, normalization, and model contract | `65f6e248fa27` |
+| `models/deeponet_reference_golden.npz`      | Python golden inputs and predictions     | `42d928db3e81` |
+| `models/deeponet_reference_golden.bin`      | C++-readable golden fixture              | `7829c3a66780` |
+| `models/deeponet_reference_golden.json`     | Golden binary format metadata            | `8b2a8456426c` |
+| `models/deeponet_reference_fp16.onnx`       | Experimental converted FP16 graph        | `6b4f06ca6be9` |
+| `results/gpu_optimization_experiments.json` | Curated final GPU summary                | —              |
 
 Generated datasets, build products, raw benchmark CSV files, profiler traces,
 and most intermediate checkpoints are not canonical deployment inputs.

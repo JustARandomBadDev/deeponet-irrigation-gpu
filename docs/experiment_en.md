@@ -681,12 +681,9 @@ uv sync --project python
 uv run --project python setup-onnx
 ```
 
-It neither downloads the dataset nor trains anything. Details, prerequisites,
-and hashes are documented in the
-[reproducibility note](reproducibility.md), the
-[ONNX contract](onnx_deployment.md), the
-[C++ runtime document](onnx_runtime_cpp.md), and the
-[GPU optimization report](gpu_optimization_experiments.md).
+It neither downloads the dataset nor trains anything. The ONNX contract,
+frozen artifacts, prerequisites, and reproducible commands are consolidated in
+the [implementation documentation](implementation.md).
 
 ## 20. Conclusion
 
