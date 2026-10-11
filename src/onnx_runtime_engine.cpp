@@ -19,7 +19,7 @@ namespace deeponet {
 namespace {
 
 constexpr std::size_t kBranchDimension = 723;
-constexpr std::size_t kMaximumIoBindingBatch = 128;
+constexpr std::size_t kMaximumIoBindingBatch = 4096;
 constexpr std::array<const char*, 3> kInputNames = {
     "branch_input",
     "horizon",
@@ -306,7 +306,7 @@ void OnnxRuntimeEngine::infer_iobinding(
         p_batch_size
     );
     if (p_batch_size > kMaximumIoBindingBatch) {
-        throw std::invalid_argument("I/O Binding supports a maximum batch of 128");
+        throw std::invalid_argument("I/O Binding supports a maximum batch of 4096");
     }
     if (p_predictions.size() != p_batch_size) {
         throw std::invalid_argument("prediction span must contain batch_size floats");

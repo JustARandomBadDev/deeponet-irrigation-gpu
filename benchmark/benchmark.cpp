@@ -31,7 +31,7 @@
 namespace {
 
 constexpr float kCorrectnessTolerance = 1.0e-4F;
-constexpr std::array<std::size_t, 4> kBatchSizes = {1, 8, 32, 128};
+constexpr std::array<std::size_t, 9> kBatchSizes = {1, 8, 32, 128, 256, 512, 1024, 2048, 4096};
 
 enum class BenchmarkMode {
     Cpu,
@@ -544,7 +544,7 @@ void write_environment(
            << "  \"repetitions\": " << p_options.repetitions << ",\n"
            << "  \"benchmark_modes\": [\"cpu\", \"cuda\", "
               "\"cuda_iobinding\"],\n"
-           << "  \"batch_sizes\": [1, 8, 32, 128],\n"
+           << "  \"batch_sizes\": [1, 8, 32, 128, 256, 512, 1024, 2048, 4096],\n"
            << "  \"input_source\": "
               "\"deterministic repetition of existing golden vectors\",\n"
            << "  \"available_execution_providers\": [";
